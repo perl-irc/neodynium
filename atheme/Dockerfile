@@ -1,83 +1,86 @@
-# ABOUTME: Atheme IRC services container with PostgreSQL support and OpenSSL optimization
-# ABOUTME: Multi-stage build optimized for AMD EPYC with Tailscale integration
+# ABOUTME: Atheme IRC services container with PostgreSQL support and Tailscale integration
+# ABOUTME: Based on overdrivenetworks/atheme-docker approach with Tailscale additions
 
-# Build stage - Atheme with OpenSSL for AMD EPYC
-FROM alpine:latest as builder
+ARG ATHEME_VERSION=7.2.12
+ARG ATHEME_UID=10000
 
-# Install build dependencies
-RUN apk update && apk add --no-cache \
+# Tailscale stage - get Tailscale binaries
+FROM tailscale/tailscale:latest as tailscale
+
+# Build stage
+FROM alpine:latest AS builder
+ARG ATHEME_VERSION
+ARG MAKE_NUM_JOBS
+
+RUN test -n "$ATHEME_VERSION" || (echo "Please set a version to build in build arg ATHEME_VERSION" && false)
+
+# Install build dependencies including PostgreSQL support
+RUN apk add --no-cache \
     build-base \
-    autoconf \
-    automake \
-    libtool \
-    pkgconfig \
+    pkgconf \
     openssl-dev \
     postgresql-dev \
     pcre-dev \
-    gettext-dev \
-    libintl \
-    git \
-    && rm -rf /var/cache/apk/*
+    git
 
-# Build Atheme with OpenSSL support
-WORKDIR /tmp
-RUN git clone https://github.com/atheme/atheme.git
-WORKDIR /tmp/atheme
-ENV CFLAGS="-march=znver2 -O3"
-# Generate configure script if needed
-RUN if [ ! -f configure ]; then autoreconf -fiv; fi
-RUN ./configure --prefix=/opt/atheme \
-    --enable-contrib \
-    --with-pcre \
-    --enable-ssl \
-    --enable-aes \
-    --with-postgresql
-RUN make -j$(nproc) && make install
+# Checkout from Git using tagged release (avoids GIT-Access.txt issue)
+RUN git clone https://github.com/atheme/atheme -b v${ATHEME_VERSION} --depth=1 /atheme-src --recursive
+RUN cd /atheme-src/libmowgli-2 && git pull origin master
+
+# Configure with PostgreSQL support and build
+RUN cd /atheme-src && \
+    ./configure \
+        --prefix=/atheme \
+        --enable-contrib \
+        --with-postgresql \
+        --with-pcre \
+        --enable-ssl && \
+    make -j${MAKE_NUM_JOBS:-$(nproc)} && \
+    make install
 
 # Production stage
 FROM alpine:latest
+ARG ATHEME_UID
 
 # Install runtime dependencies
-RUN apk update && apk add --no-cache \
+RUN apk add --no-cache \
     openssl \
     postgresql-client \
-    pcre \
+    msmtp \
     ca-certificates \
-    iptables \
-    ip6tables \
-    pwgen \
+    curl \
     gettext \
-    bash \
-    su-exec \
-    netcat-openbsd \
     && rm -rf /var/cache/apk/*
 
 # Copy Atheme from builder
-COPY --from=builder /opt/atheme /opt/atheme
+COPY --from=builder /atheme/ /atheme
 
-# Copy Tailscale binaries from official image
-COPY --from=tailscale/tailscale:latest /usr/local/bin/tailscaled /usr/local/bin/tailscaled
-COPY --from=tailscale/tailscale:latest /usr/local/bin/tailscale /usr/local/bin/tailscale
+# Copy Tailscale binaries
+COPY --from=tailscale /usr/local/bin/tailscaled /usr/local/bin/tailscaled
+COPY --from=tailscale /usr/local/bin/tailscale /usr/local/bin/tailscale
 
 # Create directories
-RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
-RUN mkdir -p /opt/atheme/etc
+RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale /app
 
-# Create atheme user
-RUN adduser -D -s /bin/false atheme
-RUN chown -R atheme:atheme /opt/atheme
+# Add atheme user
+RUN adduser -D -h /atheme -u $ATHEME_UID atheme
+RUN chown -R atheme /atheme
 
 # Copy configuration templates and startup script
-COPY atheme/atheme.conf.template /opt/atheme/etc/atheme.conf.template
+COPY atheme/atheme.conf.template /atheme/etc/atheme.conf.template
 COPY atheme/entrypoint.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
-# Container starts as root for Tailscale, drops to atheme user for services
-WORKDIR /opt/atheme
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
-# Security: Atheme service runs as atheme user via su-exec
-USER atheme
-
+# Expose ports
 EXPOSE 8080
 
+# Volume for configuration
+VOLUME /atheme/etc
+
+# Container starts as root for Tailscale, drops to atheme user for services
+WORKDIR /atheme
 CMD ["/app/start.sh"]
