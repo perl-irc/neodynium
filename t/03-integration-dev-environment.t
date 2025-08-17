@@ -163,7 +163,6 @@ subtest 'verify dev secrets configured' => sub {
 # Test 7: Verify managed postgres setup
 subtest 'verify managed postgres setup' => sub {
     my $postgres_name = "magnet-postgres";
-    my $database_name = "magnet_dev_$USERNAME";
     
     # Check if production postgres cluster exists
     my $postgres_list = `flyctl mpg list --org magnet-irc 2>&1`;
@@ -175,7 +174,7 @@ subtest 'verify managed postgres setup' => sub {
             my $atheme_app = "magnet-services-$USERNAME";
             my $secrets_output = `flyctl secrets list --app $atheme_app 2>&1`;
             if ($? == 0 && $secrets_output =~ /DATABASE_URL/) {
-                pass("DATABASE_URL secret configured on $atheme_app for database $database_name");
+                pass("DATABASE_URL secret configured on $atheme_app");
             } else {
                 pass("DATABASE_URL check completed (may not be attached yet)");
             }

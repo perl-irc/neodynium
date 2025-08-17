@@ -79,7 +79,7 @@ sub create_dev_app {
     
     print "🏗️  Creating dev app $app_name...\n";
     
-    my $create_cmd = "flyctl apps create $app_name --org personal";
+    my $create_cmd = "flyctl apps create $app_name --org magnet-irc";
     my $output = `$create_cmd 2>&1`;
     
     if ($? == 0) {

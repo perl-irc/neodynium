@@ -284,16 +284,16 @@ sub attach_dev_postgres {
     
     my $postgres_name = "magnet-postgres";
     my $atheme_app = get_dev_app_name('magnet-services', $username);
-    my $database_name = "magnet_dev_$username";
     
-    print "🔗 Attaching production Postgres cluster with per-user database $database_name...\n";
+    print "🔗 Attaching production Postgres cluster to $atheme_app...\n";
+    print "ℹ️  Note: Per-user database isolation will be handled at the application level\n";
     
-    # Attach the shared cluster and create a per-user database
-    my $cmd = "flyctl mpg attach $postgres_name --app $atheme_app --database-name $database_name 2>&1";
+    # Attach the shared cluster (creates DATABASE_URL environment variable)
+    my $cmd = "flyctl mpg attach $postgres_name --app $atheme_app 2>&1";
     my $output = `$cmd`;
     
     if ($? == 0 || $output =~ /already attached/i) {
-        print "✅ Postgres cluster attached to $atheme_app with database $database_name\n";
+        print "✅ Postgres cluster attached to $atheme_app\n";
         return 1;
     } else {
         print "⚠️  Failed to attach Postgres (may already be attached):\n$output\n";
