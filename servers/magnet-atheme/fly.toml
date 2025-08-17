@@ -5,8 +5,8 @@ app = "magnet-atheme"
 primary_region = "ord"
 
 [vm]
-  memory = "2gb"
-  cpus = 2
+  memory = "1gb"
+  cpus = 1
 
 [build]
   dockerfile = "../../atheme/Dockerfile"

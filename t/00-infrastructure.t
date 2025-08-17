@@ -24,8 +24,8 @@ my %EXPECTED_APPS = (
     },
     'magnet-atheme' => {
         region => 'ord',
-        memory => '2gb',
-        cpus => 2,
+        memory => '1gb',
+        cpus => 1,
         volume_size => 3,
         ports => [8080],
     },
