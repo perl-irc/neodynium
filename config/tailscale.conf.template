@@ -15,7 +15,7 @@ hostname=${SERVER_NAME:-magnet-unknown}
 
 # Security settings
 accept-routes=false
-accept-dns=false
+accept-dns=true
 
 # SSH access for administration
 ssh=true

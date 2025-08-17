@@ -269,8 +269,8 @@ subtest 'cross-region connectivity configuration' => sub {
         my $content = do { local $/; <$fh> };
         close $fh;
         
-        # Configuration for cross-region access
-        like($content, qr/--accept-dns=false/i, "$service: Disables DNS override for regional isolation");
+        # Configuration for cross-region access with MagicDNS enabled
+        like($content, qr/--accept-dns=true/i, "$service: Enables MagicDNS for hostname resolution");
         
         # Should not restrict regions
         unlike($content, qr/--exit-node-allow-lan-access=false/i, 
