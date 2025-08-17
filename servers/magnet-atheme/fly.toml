@@ -1,0 +1,39 @@
+# ABOUTME: Fly.io configuration for magnet-atheme (IRC services)
+# ABOUTME: Atheme IRC services deployed in Chicago region for US operation
+
+app = "magnet-atheme"
+primary_region = "ord"
+
+[vm]
+  memory = "2gb"
+  cpus = 2
+
+# [build]
+#   dockerfile = "Dockerfile.atheme"  # Will be added in GitHub Issue #2
+
+[mounts]
+  source = "magnet_atheme_data"
+  destination = "/var/lib/atheme"
+
+[env]
+  SERVER_NAME = "magnet-atheme"
+
+[http_service]
+  internal_port = 8080
+  force_https = false
+  auto_stop_machines = true
+  auto_start_machines = true
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[services]]
+  internal_port = 6667
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 6667
