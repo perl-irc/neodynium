@@ -40,7 +40,7 @@ EPHEMERAL_KEY="tskey-auth-xxxxxx-xxxx"
 FLY_TOKEN="fo1_xxxxxxxxxxxxxxxxxxxxxx"
 
 # Add to GitHub repository secrets at:
-# https://github.com/your-org/your-repo/settings/secrets/actions
+# https://github.com/perl-irc/neodynium/settings/secrets/actions
 # 
 # Required secrets:
 # Name: FLY_API_TOKEN
@@ -182,7 +182,7 @@ ssh root@magnet-9rl 'cat /proc/cpuinfo | grep flags'
 NEW_KEY="tskey-auth-xxxxxx-yyyy"
 
 # Update GitHub repository secret
-# Go to: https://github.com/your-org/your-repo/settings/secrets/actions
+# Go to: https://github.com/perl-irc/neodynium/settings/secrets/actions
 # Update TAILSCALE_AUTHKEY with new value
 
 # Redeploy to apply new key (triggers via GitHub Actions)
