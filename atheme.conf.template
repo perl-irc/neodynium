@@ -39,8 +39,8 @@ serverinfo {
 };
 
 /* Uplink configuration via Tailscale */
-uplink "magnet-9RL.${ATHEME_NETWORK_DOMAIN}" {
-    host = "magnet-9rl";  /* Tailscale hostname */
+uplink "${ATHEME_HUB_SERVER}.${ATHEME_NETWORK_DOMAIN}" {
+    host = "${ATHEME_HUB_HOSTNAME}";  /* Tailscale hostname */
     send_password = "${SERVICES_PASSWORD}";
     receive_password = "${SERVICES_PASSWORD}";
     port = 6667;

@@ -17,6 +17,12 @@ primary_region = "ord"
 
 [env]
   SERVER_NAME = "magnet-atheme"
+  ATHEME_NETWORK = "Magnet"
+  ATHEME_NETWORK_DOMAIN = "kowloon.social"
+  ATHEME_POSTGRES_HOST = "magnet-postgres.internal"
+  ATHEME_POSTGRES_DB = "atheme"
+  ATHEME_HUB_SERVER = "magnet-9RL"
+  ATHEME_HUB_HOSTNAME = "magnet-9rl"
 
 [http_service]
   internal_port = 8080

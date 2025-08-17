@@ -151,6 +151,8 @@ Both containers use configuration templates with environment variable substituti
 - `${OPERATOR_PASSWORD}`: Services operator authentication
 - `${ATHEME_POSTGRES_HOST}`: Database host (magnet-postgres.internal)
 - `${ATHEME_POSTGRES_DB}`: Database name
+- `${ATHEME_HUB_SERVER}`: Configurable hub server name (default: magnet-9RL)
+- `${ATHEME_HUB_HOSTNAME}`: Configurable hub Tailscale hostname (default: magnet-9rl)
 
 ### Password Generation Strategy
 Secure password generation using `pwgen` with fallback to environment variables:

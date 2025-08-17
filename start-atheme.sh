@@ -38,7 +38,7 @@ source /opt/atheme/etc/passwords.conf
 
 # Process atheme.conf template with generated passwords
 echo "Instantiating atheme.conf from template..."
-envsubst '${ATHEME_NETWORK} ${ATHEME_NETWORK_DOMAIN} ${SERVICES_PASSWORD} ${OPERATOR_PASSWORD} ${ATHEME_POSTGRES_HOST} ${ATHEME_POSTGRES_DB}' \
+envsubst '${ATHEME_NETWORK} ${ATHEME_NETWORK_DOMAIN} ${SERVICES_PASSWORD} ${OPERATOR_PASSWORD} ${ATHEME_POSTGRES_HOST} ${ATHEME_POSTGRES_DB} ${ATHEME_HUB_SERVER} ${ATHEME_HUB_HOSTNAME}' \
     < /opt/atheme/etc/atheme.conf.template \
     > /opt/atheme/etc/atheme.conf
 
