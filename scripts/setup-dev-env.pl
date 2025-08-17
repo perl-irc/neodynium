@@ -88,7 +88,15 @@ sub create_dev_volume {
     my ($base_name, $username) = @_;
     
     my $app_name = get_dev_app_name($base_name, $username);
-    my $volume_name = "${base_name}_${username}_data";
+    # Create shorter volume name (max 30 chars, only lowercase alphanumeric and underscores)
+    my $short_base = $base_name;
+    $short_base =~ s/magnet-//;  # Remove magnet- prefix to save space
+    my $volume_name = "${short_base}_${username}_vol";
+    
+    # Ensure volume name is under 30 characters
+    if (length($volume_name) > 30) {
+        $volume_name = substr($volume_name, 0, 30);
+    }
     
     if (volume_exists($app_name, $volume_name)) {
         print "✅ Volume $volume_name already exists for $app_name\n";
@@ -97,7 +105,7 @@ sub create_dev_volume {
     
     print "📦 Creating volume $volume_name for $app_name...\n";
     
-    my $cmd = "flyctl volumes create $volume_name --region ord --size 1 --app $app_name";
+    my $cmd = "flyctl volumes create $volume_name --region ord --size 1 --app $app_name --yes";
     my $output = `$cmd 2>&1`;
     
     if ($? == 0) {
@@ -169,7 +177,15 @@ sub list_dev_environment {
     
     foreach my $base_name (@DEV_APPS) {
         my $app_name = get_dev_app_name($base_name, $username);
-        my $volume_name = "${base_name}_${username}_data";
+        # Create shorter volume name (max 30 chars, only lowercase alphanumeric and underscores)
+    my $short_base = $base_name;
+    $short_base =~ s/magnet-//;  # Remove magnet- prefix to save space
+    my $volume_name = "${short_base}_${username}_vol";
+    
+    # Ensure volume name is under 30 characters
+    if (length($volume_name) > 30) {
+        $volume_name = substr($volume_name, 0, 30);
+    }
         
         printf "App: %-20s ", $app_name;
         if (app_exists($app_name)) {
