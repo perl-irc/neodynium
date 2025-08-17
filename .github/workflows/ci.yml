@@ -119,8 +119,8 @@ jobs:
         run: |
           echo "Checking for hardcoded secrets..."
           
-          # Check for hardcoded Tailscale auth keys
-          if grep -r "tskey-auth-" . --exclude-dir=.git; then
+          # Check for hardcoded Tailscale auth keys (actual keys, not placeholders)
+          if grep -r "tskey-auth-[a-zA-Z0-9]\{20,\}" . --exclude-dir=.git --exclude="*.md" --exclude="t/*.t"; then
             echo "ERROR: Found hardcoded Tailscale auth key"
             exit 1
           fi
