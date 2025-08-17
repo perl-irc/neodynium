@@ -157,6 +157,7 @@ sub main {
     my $list = 0;
     my $revoke_pattern = '';
     my $token_name = 'GitHub Actions';
+    my $production = 0;
     my $help = 0;
     
     GetOptions(
@@ -164,6 +165,7 @@ sub main {
         'list' => \$list,
         'revoke=s' => \$revoke_pattern,
         'name=s' => \$token_name,
+        'production' => \$production,
         'help|h' => \$help,
     ) or die "Error in command line arguments\n";
     
@@ -178,6 +180,7 @@ Options:
     --list              List existing deploy tokens
     --revoke PATTERN    Revoke tokens matching pattern
     --name NAME         Name for created tokens (default: "GitHub Actions")
+    --production        Run in production mode (for CI/CD)
     --help              Show this help message
 
 Examples:
@@ -195,10 +198,17 @@ EOF
         exit 0;
     }
     
-    print "Magnet IRC Network - Deploy Token Management\n";
-    print "=" x 50 . "\n\n";
+    unless ($production) {
+        print "Magnet IRC Network - Deploy Token Management\n";
+        print "=" x 50 . "\n\n";
+    }
     
     check_prerequisites();
+    
+    # In production mode, always create tokens without interactive output
+    if ($production) {
+        $create = 1;
+    }
     
     if ($list) {
         list_existing_tokens();
@@ -210,7 +220,9 @@ EOF
     
     if ($create) {
         my @tokens = create_deploy_tokens($token_name);
-        display_github_instructions(@tokens);
+        unless ($production) {
+            display_github_instructions(@tokens);
+        }
     }
     
     unless ($create || $list || $revoke_pattern) {

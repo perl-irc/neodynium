@@ -104,9 +104,11 @@ sub verify_volumes {
 sub main {
     my $dry_run = 0;
     my $help = 0;
+    my $production = 0;
     
     GetOptions(
         'dry-run' => \$dry_run,
+        'production' => \$production,
         'help|h' => \$help,
     ) or die "Error in command line arguments\n";
     
@@ -117,8 +119,9 @@ Usage: $0 [options]
 Creates persistent volumes for Magnet IRC Network components.
 
 Options:
-    --dry-run    Show what would be done without making changes
-    --help       Show this help message
+    --dry-run      Show what would be done without making changes
+    --production   Run in production mode (for CI/CD)
+    --help         Show this help message
 
 Volume Configuration:
     magnet-9rl:    3GB volume in ord (Chicago) region
@@ -132,8 +135,10 @@ EOF
         exit 0;
     }
     
-    print "Magnet IRC Network - Volume Provisioning\n";
-    print "=" x 45 . "\n\n";
+    unless ($production) {
+        print "Magnet IRC Network - Volume Provisioning\n";
+        print "=" x 45 . "\n\n";
+    }
     
     # Pre-flight checks
     check_fly_cli();
