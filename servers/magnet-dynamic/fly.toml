@@ -1,0 +1,71 @@
+# ABOUTME: Fly.io configuration for dynamic multi-region IRC server deployment
+# ABOUTME: Uses start-dynamic.sh to generate server-specific configuration
+
+app = "magnet-irc"
+primary_region = "ord"
+
+[build]
+  dockerfile = "../../solanum/Dockerfile"
+  context = "../.."
+  args = {
+    "DEPLOYMENT_TYPE" = "dynamic"
+  }
+
+[env]
+  # Network configuration
+  TAILSCALE_DOMAIN = "camel-kanyu.ts.net"
+  ADMIN_NAME = "Chris Prather"
+  ADMIN_DESCRIPTION = "MagNET IRC Network Administrator"
+  ADMIN_EMAIL = "chris@prather.org"
+  
+[experimental]
+  auto_rollback = true
+
+# Deploy to multiple regions
+[[regions]]
+  region = "ord"
+  
+[[regions]]
+  region = "ams"
+  
+[[regions]]
+  region = "sin"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 6667
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 6667
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 6697
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 6697
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["app"]
+  auto_stop_machines = false
+  auto_start_machines = false
+
+  [[services.http_checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "60s"
+    method = "GET"
+    path = "/"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 1024
+
+# Override CMD to use dynamic start script
+[processes]
+  app = "/app/start-dynamic.sh"

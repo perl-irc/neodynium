@@ -1,79 +1,62 @@
-# ABOUTME: Atheme IRC services container with PostgreSQL support and OpenSSL optimization
-# ABOUTME: Multi-stage build optimized for AMD EPYC with Tailscale integration
+# ABOUTME: Atheme IRC services container with PostgreSQL support
+# ABOUTME: Builds and runs Atheme services with database connectivity
 
-# Build stage - Atheme with OpenSSL for AMD EPYC
-FROM alpine:latest as builder
-
-# Install build dependencies
-RUN apk update && apk add --no-cache \
-    build-base \
-    autoconf \
-    automake \
-    libtool \
-    pkgconfig \
-    openssl-dev \
-    postgresql-dev \
-    pcre-dev \
-    git \
-    && rm -rf /var/cache/apk/*
-
-# Build Atheme with OpenSSL support
-WORKDIR /tmp
-RUN git clone https://github.com/atheme/atheme.git
-WORKDIR /tmp/atheme
-ENV CFLAGS="-march=znver2 -O3"
-RUN ./configure --prefix=/opt/atheme \
-    --enable-contrib \
-    --with-pcre \
-    --enable-ssl \
-    --enable-aes \
-    --with-postgresql
-RUN make -j$(nproc) && make install
-
-# Production stage
 FROM alpine:latest
 
-# Install runtime dependencies
+# Install build and runtime dependencies for Atheme
 RUN apk update && apk add --no-cache \
-    openssl \
-    postgresql-client \
-    pcre \
+    build-base \
+    pkgconfig \
+    automake \
+    autoconf \
+    libtool \
+    git \
     ca-certificates \
-    iptables \
-    ip6tables \
-    pwgen \
     gettext \
-    bash \
     su-exec \
     netcat-openbsd \
-    && rm -rf /var/cache/apk/*
-
-# Copy Atheme from builder
-COPY --from=builder /opt/atheme /opt/atheme
+    procps \
+    openssl-dev \
+    openssl \
+    pcre2-dev
 
 # Copy Tailscale binaries from official image
 COPY --from=tailscale/tailscale:latest /usr/local/bin/tailscaled /usr/local/bin/tailscaled
 COPY --from=tailscale/tailscale:latest /usr/local/bin/tailscale /usr/local/bin/tailscale
 
-# Create directories
-RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
-RUN mkdir -p /opt/atheme/etc
+# Build Atheme from source
+WORKDIR /tmp
+RUN git clone https://github.com/atheme/atheme.git
+WORKDIR /tmp/atheme
+RUN git submodule update --init
+RUN ./configure --prefix=/opt/atheme --enable-contrib --enable-large-net --with-pcre
+RUN make
+RUN make install
 
-# Create atheme user
-RUN adduser -D -s /bin/false atheme
-RUN chown -R atheme:atheme /opt/atheme
+# Create directories and user first
+RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
+RUN mkdir -p /opt/atheme/var
+RUN adduser -D -h /opt/atheme/var -u 1000 atheme
+RUN chown -R atheme:atheme /opt/atheme/var
+
+# Fix permissions for atheme installation  
+RUN chmod 755 /opt/atheme/bin/*
+RUN chown -R root:root /opt/atheme
+RUN mkdir -p /opt/atheme/etc
+RUN chown atheme:atheme /opt/atheme/etc
+
+# Create and set permissions for volume mount directory
+RUN mkdir -p /var/lib/atheme
+RUN chown atheme:atheme /var/lib/atheme
 
 # Copy configuration templates and startup script
-COPY atheme.conf.template /opt/atheme/etc/atheme.conf.template
-COPY entrypoint.sh /app/start.sh
-RUN chmod +x /app/start.sh
+COPY atheme/atheme.conf.template /opt/atheme/atheme.conf.template
+COPY atheme/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Container starts as root for Tailscale, drops to atheme user for services
-WORKDIR /opt/atheme
+WORKDIR /opt/atheme/var
 
-# Security: Atheme service runs as atheme user via su-exec
-USER atheme
+EXPOSE 6667
 
-EXPOSE 8080
-
-CMD ["/app/start.sh"]
+CMD ["/app/entrypoint.sh"]

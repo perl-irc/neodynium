@@ -4,6 +4,8 @@
 
 use strict;
 use warnings;
+use utf8;
+use open ':std', ':encoding(UTF-8)';
 use Getopt::Long;
 use JSON::PP;
 
@@ -77,7 +79,7 @@ sub create_dev_app {
     
     print "🏗️  Creating dev app $app_name...\n";
     
-    my $create_cmd = "flyctl apps create $app_name --org personal";
+    my $create_cmd = "flyctl apps create $app_name --org magnet-irc";
     my $output = `$create_cmd 2>&1`;
     
     if ($? == 0) {
@@ -95,8 +97,8 @@ sub deploy_dev_app {
     my $app_name = get_dev_app_name($base_name, $username);
     print "🚀 Deploying $app_name ($config->{description})...\n";
     
-    # Construct deploy command
-    my $deploy_cmd = "flyctl deploy --config $config->{config} --app $app_name";
+    # Construct deploy command - deploy from project root for proper build context
+    my $deploy_cmd = "flyctl deploy . --config $config->{config} --app $app_name --wait-timeout 300";
     $deploy_cmd .= " --remote-only" if $remote_only;
     
     print "Running: $deploy_cmd\n";

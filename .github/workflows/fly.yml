@@ -23,12 +23,12 @@ jobs:
           
       - name: Create PostgreSQL Database
         run: |
-          # Check if magnet-postgres already exists
-          if ! flyctl apps list | grep -q "magnet-postgres"; then
-            echo "Creating PostgreSQL database..."
-            flyctl postgres create --name magnet-postgres --region ord --initial-cluster-size 1
+          # Check if managed postgres cluster already exists
+          if ! flyctl mpg list --org perl-irc | grep -q "magnet-postgres"; then
+            echo "Creating Managed PostgreSQL cluster..."
+            flyctl mpg create --name magnet-postgres --region ord --org perl-irc
           else
-            echo "PostgreSQL database already exists"
+            echo "Managed PostgreSQL cluster already exists"
           fi
           
       - name: Create Volumes
@@ -60,13 +60,10 @@ jobs:
       - name: Attach PostgreSQL to magnet-atheme
         if: matrix.app == 'magnet-atheme'
         run: |
-          # Check if already attached
-          if ! flyctl postgres attach --app magnet-atheme magnet-postgres --dry-run 2>/dev/null; then
-            echo "Attaching PostgreSQL to magnet-atheme..."
-            flyctl postgres attach --app magnet-atheme magnet-postgres
-          else
-            echo "PostgreSQL already attached to magnet-atheme"
-          fi
+          # Attach managed postgres to atheme app
+          # This creates DATABASE_URL secret automatically
+          echo "Attaching Managed PostgreSQL to magnet-atheme..."
+          flyctl mpg attach magnet-postgres --app magnet-atheme || echo "Database may already be attached"
         
       - name: Set Tailscale Auth Key Secret
         run: |

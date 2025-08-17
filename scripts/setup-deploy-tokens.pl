@@ -4,6 +4,8 @@
 
 use strict;
 use warnings;
+use utf8;
+use open ':std', ':encoding(UTF-8)';
 use Getopt::Long;
 
 my @APPS = qw(magnet-9rl magnet-1eu magnet-atheme);

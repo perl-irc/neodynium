@@ -8,30 +8,30 @@ primary_region = "ord"
   memory = "1gb"
   cpus = 1
 
+[[restart]]
+  policy = "on-failure"
+
 [build]
-  dockerfile = "../../solanum/Dockerfile"
+  dockerfile = "solanum/Dockerfile"
 
 [mounts]
   source = "magnet_9rl_data"
-  destination = "/opt/solanum/var"
+  destination = "/opt/solanum/etc/"
+
+# [mounts]
+#   source = "magnet_9rl_data"
+#   destination = "/opt/solanum/var"
 
 [env]
   SERVER_NAME = "magnet-9rl"
   SERVER_SID = "9RL"
   SERVER_DESCRIPTION = "Magnet IRC Network - US Hub"
+  TAILSCALE_DOMAIN = "camel-kanyu.ts.net"
+  ADMIN_NAME = "Chris Prather"
+  ADMIN_DESCRIPTION = "Current MagNET Wrangler"
+  ADMIN_EMAIL = "chris@prather.org"
+  SSL_DOMAINS = "magnet-9rl.fly.dev,magnet-9rl.kowloon.social,magnet-9rl.irc.perl.org"
 
-[http_service]
-  internal_port = 8080
-  force_https = false
-  auto_stop_machines = true
-  auto_start_machines = true
-
-  [[http_service.checks]]
-    grace_period = "30s"
-    interval = "15s"
-    method = "GET"
-    timeout = "5s"
-    path = "/health"
 
 [[services]]
   internal_port = 6667
@@ -40,6 +40,11 @@ primary_region = "ord"
   [[services.ports]]
     port = 6667
 
+  [[services.tcp_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    timeout = "5s"
+
 [[services]]
   internal_port = 6697
   protocol = "tcp"
@@ -47,9 +52,19 @@ primary_region = "ord"
   [[services.ports]]
     port = 6697
 
+  [[services.tcp_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    timeout = "5s"
+
 [[services]]
   internal_port = 7000
   protocol = "tcp"
 
   [[services.ports]]
     port = 7000
+
+  [[services.tcp_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    timeout = "5s"

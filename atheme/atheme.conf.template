@@ -1,147 +1,146 @@
-# ABOUTME: Atheme IRC services configuration template with environment variable substitution  
-# ABOUTME: Optimized with OpenSSL for AMD EPYC performance and PostgreSQL backend
+# ABOUTME: Atheme IRC services configuration template with environment variable substitution
+# ABOUTME: Optimized with OpenSSL for AMD EPYC performance and opensex flat file backend
 
 # Atheme Configuration Template for ${ATHEME_NETWORK}
 # Optimized with OpenSSL for AMD EPYC performance
 
-/* Database configuration */
+/* Database configuration - using opensex flat file backend */
 database {
-    module = "postgresql";
-    host = "${ATHEME_POSTGRES_HOST}";
-    port = 5432;
-    database = "${ATHEME_POSTGRES_DB}";
-    username = "postgres";
-    password = ""; # Will be set via DATABASE_URL env var
+    module = "opensex";
 };
 
 /* Network information */
-loadmodule "modules/backend/opensex";
+loadmodule "backend/opensex";
 
 serverinfo {
-    name = "services.raptor-betelgeuse.ts.net";
+    name = "magnet-atheme.internal";
     desc = "${ATHEME_NETWORK} IRC Services";
     numeric = "00A";
-    vhost = "0.0.0.0";
     recontime = 10;
     restartonfailure = no;
     netname = "${ATHEME_NETWORK}";
-    hidehostsuffix = "users.raptor-betelgeuse.ts.net";
-    adminname = "Network Administrator";
-    adminemail = "admin@raptor-betelgeuse.ts.net";
-    mta = "/usr/sbin/sendmail";
+    hidehostsuffix = "users.${TAILSCALE_DOMAIN}";
+    adminname = "${ADMIN_NAME}";
+    adminemail = "${ADMIN_EMAIL}";
     loglevel = { error; info; verbose; };
-    maxlogins = 5;
+    maxlogins = 10;
     maxusers = 0;
-    maxnicks = 5;
-    maxchans = 5;
+    maxnicks = 10;
+    maxchans = 20;
     emaillimit = 10;
     emailtime = 300;
+    auth = none;
 };
 
-/* Uplink configuration via Tailscale */
-uplink "${ATHEME_HUB_SERVER}.raptor-betelgeuse.ts.net" {
-    host = "${ATHEME_HUB_HOSTNAME}";  /* Tailscale hostname */
-    send_password = "${SERVICES_PASSWORD}";
+/* Uplink configuration - primary IRC server */
+uplink "${ATHEME_HUB_HOSTNAME}" {
+    host = "${ATHEME_HUB_HOSTNAME}";
+    vhost = "${FLY_PRIVATE_IP}";
+    send_password = "${PASSWORD_9RL}";
     receive_password = "${SERVICES_PASSWORD}";
     port = 6667;
-    vhost = "0.0.0.0";
 };
 
-/* Operator configuration */
-operator "${OPERATOR_PASSWORD}" {
-    name = "admin";
-    class = "sra";
+uplink "${ATHEME_FALLBACK_HOSTNAME}" {
+    host = "${ATHEME_FALLBACK_HOSTNAME}";
+    vhost = "${FLY_PRIVATE_IP}";
+    send_password = "${PASSWORD_1EU}";
+    receive_password = "${SERVICES_PASSWORD}";
+    port = 6667;
 };
+
 
 /* Load core services */
-loadmodule "modules/nickserv/main";
-loadmodule "modules/chanserv/main";
-loadmodule "modules/operserv/main";
-loadmodule "modules/memoserv/main";
+loadmodule "nickserv/main";
+loadmodule "chanserv/main";
+loadmodule "operserv/main";
+loadmodule "memoserv/main";
 
 /* NickServ configuration */
 nickserv {
     nick = "NickServ";
     user = "services";
-    host = "services.raptor-betelgeuse.ts.net";
+    host = "services.${TAILSCALE_DOMAIN}";
     real = "Nickname Services";
-    aliases = { "NS" };
+    aliases = "NS";
 };
 
 /* ChanServ configuration */
 chanserv {
     nick = "ChanServ";
     user = "services";
-    host = "services.raptor-betelgeuse.ts.net";
+    host = "services.${TAILSCALE_DOMAIN}";
     real = "Channel Services";
-    aliases = { "CS" };
+    aliases = "CS";
 };
 
 /* OperServ configuration */
 operserv {
     nick = "OperServ";
     user = "services";
-    host = "services.raptor-betelgeuse.ts.net";
+    host = "services.${TAILSCALE_DOMAIN}";
     real = "Operator Services";
-    aliases = { "OS" };
+    aliases = "OS";
 };
 
 /* MemoServ configuration */
 memoserv {
     nick = "MemoServ";
     user = "services";
-    host = "services.raptor-betelgeuse.ts.net";
+    host = "services.${TAILSCALE_DOMAIN}";
     real = "Memo Services";
-    aliases = { "MS" };
+    aliases = "MS";
 };
 
 /* Protocol module */
-loadmodule "modules/protocol/solanum";
+loadmodule "protocol/solanum";
 
 /* Backend modules */
-loadmodule "modules/backend/opensex";
+loadmodule "backend/opensex";
 
 /* Crypto modules - OpenSSL optimized */
-loadmodule "modules/crypto/pbkdf2";
+loadmodule "crypto/pbkdf2v2";
+loadmodule "crypto/pbkdf2";
+
 
 /* Essential NickServ modules */
-loadmodule "modules/nickserv/enforce";
-loadmodule "modules/nickserv/help";
-loadmodule "modules/nickserv/identify";
-loadmodule "modules/nickserv/info";
-loadmodule "modules/nickserv/list";
-loadmodule "modules/nickserv/logout";
-loadmodule "modules/nickserv/register";
-loadmodule "modules/nickserv/set_core";
-loadmodule "modules/nickserv/set_email";
-loadmodule "modules/nickserv/set_password";
+loadmodule "nickserv/enforce";
+loadmodule "nickserv/help";
+loadmodule "nickserv/identify";
+loadmodule "nickserv/info";
+loadmodule "nickserv/list";
+loadmodule "nickserv/logout";
+loadmodule "nickserv/register";
+loadmodule "nickserv/set_core";
+loadmodule "nickserv/set_email";
+loadmodule "nickserv/set_password";
 
 /* Essential ChanServ modules */
-loadmodule "modules/chanserv/access";
-loadmodule "modules/chanserv/akick";
-loadmodule "modules/chanserv/ban";
-loadmodule "modules/chanserv/flags";
-loadmodule "modules/chanserv/help";
-loadmodule "modules/chanserv/info";
-loadmodule "modules/chanserv/invite";
-loadmodule "modules/chanserv/kick";
-loadmodule "modules/chanserv/list";
-loadmodule "modules/chanserv/op";
-loadmodule "modules/chanserv/register";
-loadmodule "modules/chanserv/set_core";
-loadmodule "modules/chanserv/topic";
-loadmodule "modules/chanserv/voice";
+loadmodule "chanserv/access";
+loadmodule "chanserv/akick";
+loadmodule "chanserv/ban";
+loadmodule "chanserv/flags";
+loadmodule "chanserv/help";
+loadmodule "chanserv/info";
+loadmodule "chanserv/invite";
+loadmodule "chanserv/kick";
+loadmodule "chanserv/list";
+loadmodule "chanserv/op";
+loadmodule "chanserv/register";
+loadmodule "chanserv/set_core";
+loadmodule "chanserv/topic";
+loadmodule "chanserv/voice";
 
 /* Essential OperServ modules */
-loadmodule "modules/operserv/akill";
-loadmodule "modules/operserv/help";
-loadmodule "modules/operserv/info";
-loadmodule "modules/operserv/rehash";
-loadmodule "modules/operserv/restart";
-loadmodule "modules/operserv/shutdown";
+loadmodule "operserv/akill";
+loadmodule "operserv/help";
+loadmodule "operserv/info";
+loadmodule "operserv/rehash";
+loadmodule "operserv/restart";
+loadmodule "operserv/shutdown";
 
 /* Essential MemoServ modules */
-loadmodule "modules/memoserv/help";
-loadmodule "modules/memoserv/list";
-loadmodule "modules/memoserv/read";
-loadmodule "modules/memoserv/send";
+loadmodule "memoserv/help";
+loadmodule "memoserv/list";
+loadmodule "memoserv/read";
+loadmodule "memoserv/send";

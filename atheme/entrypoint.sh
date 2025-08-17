@@ -1,6 +1,6 @@
-#!/bin/bash
-# ABOUTME: Atheme IRC services startup script with Tailscale integration and database connectivity
-# ABOUTME: Handles ephemeral Tailscale auth, password generation, and PostgreSQL connection
+#!/bin/sh
+# ABOUTME: Atheme IRC services startup script with Tailscale integration
+# ABOUTME: Handles ephemeral Tailscale auth, password generation, and opensex flat file backend
 
 set -e
 
@@ -12,36 +12,38 @@ sleep 5
 
 # Connect to Tailscale network
 HOSTNAME=${SERVER_NAME:-atheme-${FLY_REGION:-unknown}}
-/usr/local/bin/tailscale up --auth-key=${TAILSCALE_AUTHKEY} --hostname=${HOSTNAME} --ephemeral --ssh --accept-routes=false --accept-dns=true
+/usr/local/bin/tailscale up --auth-key=${TAILSCALE_AUTHKEY} --hostname=${HOSTNAME} --ssh --accept-routes=false --accept-dns=true --state=mem:
 
 echo "Connected to Tailscale as ${HOSTNAME}"
 
-# Generate Atheme passwords if they don't exist
-if [ ! -f /opt/atheme/etc/passwords.conf ]; then
-    echo "Generating secure Atheme passwords..."
+# Fix permissions for volume mount (happens after volume is attached)
+echo "Setting up volume mount permissions..."
+chown -R atheme:atheme /opt/atheme/
+find /opt/atheme -type d -exec chmod 755 {} \;
+find /opt/atheme -type f -exec chmod 644 {} \;
+find /opt/atheme/bin -type f -exec chmod 755 {} \;
 
-    # Use environment variables (secrets) if available, otherwise generate
-    SERVICES_PASS=${SERVICES_PASSWORD:-$(pwgen -s 32 1)}
-    OPERATOR_PASS=${OPERATOR_PASSWORD:-$(pwgen -s 24 1)}
 
-    cat > /opt/atheme/etc/passwords.conf << EOF
-# Auto-generated secure passwords for Atheme - DO NOT COMMIT TO VCS
-SERVICES_PASSWORD=$SERVICES_PASS
-OPERATOR_PASSWORD=$OPERATOR_PASS
-EOF
-    chown atheme:atheme /opt/atheme/etc/passwords.conf
-    chmod 600 /opt/atheme/etc/passwords.conf
+# Use Fly.io secrets directly - no password generation needed
+echo "Using passwords from Fly.io secrets..."
+
+# Verify required secrets are present
+if [ -z "${SERVICES_PASSWORD}" ]; then
+    echo "ERROR: SERVICES_PASSWORD secret not set!"
+    exit 1
 fi
 
-# Source the generated passwords
-source /opt/atheme/etc/passwords.conf
+if [ -z "${PASSWORD_9RL}" ]; then
+    echo "ERROR: PASSWORD_9RL secret not set!"
+    exit 1
+fi
 
 # Process atheme.conf template with generated passwords
 echo "Instantiating atheme.conf from template..."
-envsubst '${ATHEME_NETWORK} ${ATHEME_NETWORK_DOMAIN} ${SERVICES_PASSWORD} ${OPERATOR_PASSWORD} ${ATHEME_POSTGRES_HOST} ${ATHEME_POSTGRES_DB} ${ATHEME_HUB_SERVER} ${ATHEME_HUB_HOSTNAME}' \
-    < /opt/atheme/etc/atheme.conf.template \
-    > /opt/atheme/etc/atheme.conf
 
+# Atheme uses opensex flat file backend - no database configuration needed
+
+envsubst < /opt/atheme/atheme.conf.template > /opt/atheme/etc/atheme.conf
 chown atheme:atheme /opt/atheme/etc/atheme.conf
 chmod 644 /opt/atheme/etc/atheme.conf
 
@@ -51,8 +53,56 @@ echo "Services password: ${SERVICES_PASSWORD}"
 
 # Simple HTTP health endpoint
 (while true; do
-    echo -e "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nAtheme Services Health OK" | nc -l -p 8080 -q 1
+    echo -e "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nAtheme Services Health OK" | nc -l -p 8080
 done) &
 
-# Start Atheme as atheme user
-exec su-exec atheme /opt/atheme/bin/atheme-services -n
+# Cleanup function - only called when health check fails
+cleanup() {
+    echo "Atheme unhealthy, cleaning up..."
+    echo "Logging out of Tailscale..."
+    /usr/local/bin/tailscale logout 2>/dev/null || true
+    echo "Cleanup complete"
+}
+
+# Function to check if atheme is running
+check_atheme() {
+    pgrep -f "atheme-services" > /dev/null
+}
+
+# Find and start Atheme binary - Atheme is installed with --prefix=/opt/atheme
+ATHEME_BIN="/opt/atheme/bin/atheme-services"
+
+if [ ! -f "$ATHEME_BIN" ]; then
+    echo "ERROR: Could not find atheme-services at $ATHEME_BIN"
+    echo "Available executables in /opt/atheme/bin:"
+    ls -la /opt/atheme/bin/ 2>/dev/null || echo "Directory /opt/atheme/bin does not exist"
+    exit 1
+fi
+
+echo "Using atheme binary: $ATHEME_BIN"
+
+# Start Atheme as atheme user in daemon mode
+echo "Starting atheme with: $ATHEME_BIN"
+
+# Check if database exists, if not create it with -b flag then start normally
+# Database is stored on the persistent volume at /var/lib/atheme
+export DB_PATH="/opt/atheme/etc/services.db"
+if [ ! -f "$DB_PATH" ]; then
+    echo "Database does not exist, creating it on first run..."
+    su-exec atheme "$ATHEME_BIN" -n -b
+    echo "Database created, now starting normally..."
+fi
+
+echo "Starting Atheme services normally..."
+su-exec atheme "$ATHEME_BIN" -n
+
+# Keep container running and monitor Atheme process
+while true; do
+    sleep 5
+    if ! check_atheme; then
+        echo "Atheme process died, initiating cleanup and exit"
+        cleanup
+        exit 1
+    fi
+    sleep 10
+done

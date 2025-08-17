@@ -32,11 +32,12 @@ and Tailscale's mesh networking for secure inter-server communication.
 └─────────────────┘                  └─────────────────┘
          │                                    │
          ▼                                    ▼
-┌─────────────────┐    Tailscale     ┌─────────────────┐
-│  magnet-atheme  │◄─────────────────►│ magnet-postgres │
-│  (US Services)  │   Private Mesh   │  (Fly MPG)      │
-│  OpenSSL+EPYC   │                  │                 │
-└─────────────────┘                  └─────────────────┘
+┌─────────────────┐
+│  magnet-atheme  │
+│  (US Services)  │
+│ opensex backend │
+│  OpenSSL+EPYC   │
+└─────────────────┘
 ```
 
 ### Components
@@ -54,12 +55,7 @@ and Tailscale's mesh networking for secure inter-server communication.
 3. **magnet-atheme** - IRC Services (US/Chicago)
    - User registration and authentication (NickServ)
    - Channel management services (ChanServ)
-   - Persistent data storage via PostgreSQL
-
-4. **magnet-postgres** - Database (US/Chicago)
-   - PostgreSQL database for services persistence
-   - User accounts, channel registrations, configurations
-   - Automated backups and high availability
+   - Persistent data storage via opensex flat file backend
 
 ## Getting Started
 
@@ -73,12 +69,17 @@ and Tailscale's mesh networking for secure inter-server communication.
 
 ## Deployment
 
+**IMPORTANT**: All deployments must be run from the project root directory due to Docker build context requirements.
+
 ### Development Deployment
 
 For testing and development purposes, use development-specific app names to avoid
 conflicts with production:
 
 ```bash
+# Deploy from project root directory (REQUIRED)
+cd /path/to/magnet
+
 # Create development apps with -dev suffix
 fly apps create magnet-hub-dev --org magnet-irc
 fly apps create magnet-atheme-dev --org magnet-irc
@@ -86,9 +87,9 @@ fly apps create magnet-atheme-dev --org magnet-irc
 # Set up Tailscale authentication for dev
 fly secrets set TAILSCALE_AUTHKEY=tskey-auth-xxxxx --app magnet-9rl-dev
 
-# Deploy base infrastructure (development)
-fly deploy --app magnet-hub-dev
-fly deploy --app magnet-atheme-dev
+# Deploy base infrastructure (from root directory)
+fly deploy --app magnet-hub-dev --dockerfile solanum/Dockerfile --config servers/magnet-9rl/fly.toml
+fly deploy --app magnet-atheme-dev --dockerfile atheme/Dockerfile --config servers/magnet-atheme/fly.toml
 
 # Validate mesh connectivity
 fly ssh console --app magnet-hub-dev
@@ -196,7 +197,7 @@ All components include comprehensive health checks:
 - Tailscale mesh connectivity
 - IRC server responsiveness
 - Services authentication status
-- Database connectivity
+- Flat file backend accessibility
 - SSL certificate validity
 
 ## Development

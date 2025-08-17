@@ -1,0 +1,193 @@
+/* ABOUTME: Common Solanum IRCd configuration shared across all servers
+/* ABOUTME: Contains general settings, channel config, auth blocks, and listeners
+
+admin {
+    name = "${ADMIN_NAME}";
+    description = "${ADMIN_DESCRIPTION}";
+    email = "${ADMIN_EMAIL}";
+};
+
+/* Privilege sets for operators */
+privset "admin" {
+    privs = oper:general, oper:privs, oper:testline, oper:kill, oper:operwall,
+            oper:routing, oper:kline, oper:unkline, oper:xline, oper:resv,
+            oper:cmodes, oper:mass_notice, oper:wallops, oper:remoteban,
+            oper:die, oper:rehash, oper:admin, oper:grant, oper:message,
+            usermode:servnotice, auspex:oper, auspex:hostname, auspex:umodes,
+            auspex:cmodes;
+};
+
+/* Connection classes */
+class "users" {
+    ping_time = 2 minutes;
+    number_per_ident = 10;
+    number_per_ip = 50;
+    number_per_ip_global = 100;
+    cidr_ipv4_bitlen = 24;
+    cidr_ipv6_bitlen = 64;
+    number_per_cidr = 50;
+    max_number = 1000;
+    sendq = 100 kbytes;
+};
+
+class "opers" {
+    ping_time = 5 minutes;
+    number_per_ip = 10;
+    max_number = 100;
+    sendq = 100 kbytes;
+};
+
+/* Listeners - bind to all interfaces */
+listen {
+    port = 6667;
+};
+
+listen {
+    port = 6697;
+    sslport = 6697;
+};
+
+listen {
+    port = 7000;
+    sslport = 7000;
+};
+
+
+/* General settings */
+general {
+    hide_error_messages = opers;
+    hide_spoof_ips = yes;
+    default_umodes = "+i";
+    default_operstring = "is an IRC Operator";
+    default_adminstring = "is a Server Administrator";
+    servicestring = "is a Network Service";
+    anti_nick_flood = yes;
+    max_nick_time = 20 seconds;
+    max_nick_changes = 5;
+    ts_warn_delta = 30 seconds;
+    ts_max_delta = 5 minutes;
+    collision_fnc = yes;
+    no_oper_flood = yes;
+    throttle_duration = 60 seconds;
+    throttle_count = 4;
+    nick_delay = 0 seconds;
+    max_accept = 100;
+};
+
+
+/* Channel settings */
+channel {
+    use_invex = yes;
+    use_except = yes;
+    use_knock = yes;
+    use_forward = yes;
+    max_chans_per_user = 15;
+    max_bans = 100;
+    autochanmodes = "+nt";
+    displayed_usercount = 3;
+    disable_local_channels = no;
+
+    /* split: no create: disallow users creating channels on split */
+    no_create_on_split = no;
+
+    /* split: no join: disallow users joining channels at all on a split */
+    no_join_on_split = no;
+};
+
+/* Secure IPs - trusted sources */
+secure {
+    ip = "127.0.0.1";
+    ip = "127.0.0.0/8";       /* All loopback addresses */
+    ip = "100.64.0.0/10";     /* CGNAT range (Tailscale) */
+    ip = "::1";               /* IPv6 loopback */
+    ip = "fdaa::/16";         /* Fly.io internal IPv6 range */
+};
+
+/* Exempt IPs from D-lines and rejectcache */
+exempt {
+    ip = "127.0.0.1";
+    ip = "127.0.0.0/8";       /* All loopback addresses */
+    ip = "10.0.0.0/8";        /* Private network range */
+    ip = "172.16.0.0/12";     /* Private network range */
+    ip = "192.168.0.0/16";    /* Private network range */
+    ip = "100.64.0.0/10";     /* CGNAT range (Tailscale) */
+    ip = "::1";               /* IPv6 loopback */
+    ip = "fc00::/7";          /* IPv6 unique local addresses */
+    ip = "fdaa::/16";         /* Fly.io internal IPv6 range */
+};
+
+/* Auth spoofs and exemptions - specific users first */
+auth {
+    user = "perigrin@100.64.0.0/10";
+    user = "~perigrin@100.64.0.0/10";
+    user = "perigrin@*.camel-kanyu.ts.net";
+    user = "~perigrin@*.camel-kanyu.ts.net";
+    user = "perigrin@localhost";
+    user = "~perigrin@127.0.0.1";
+    class = "opers";
+    spoof = "damn.fool.took";
+    flags = kline_exempt, exceed_limit, no_tilde;
+};
+
+/* Generic auth for Tailscale users - must come after specific auth blocks */
+auth {
+    user = "*@100.64.0.0/10";
+    class = "users";
+    spoof = "deputized.citizen";
+    flags = kline_exempt, exceed_limit, no_tilde;
+};
+
+/* Authentication blocks - allow public connections */
+auth {
+    user = "*@*";
+    class = "users";
+};
+
+/* Service definition */
+service {
+    name = "magnet-atheme.internal";
+};
+
+/* Service aliases for user convenience */
+alias "NickServ" {
+    target = "NickServ";
+};
+
+alias "ChanServ" {
+    target = "ChanServ";
+};
+
+alias "OperServ" {
+    target = "OperServ";
+};
+
+alias "MemoServ" {
+    target = "MemoServ";
+};
+
+alias "BotServ" {
+    target = "BotServ";
+};
+
+alias "HostServ" {
+    target = "HostServ";
+};
+
+/* Cluster definition - share everything with internal network */
+cluster {
+    name = "*.internal";
+    flags = kline, tkline, unkline, xline, txline, unxline, resv, tresv, unresv;
+};
+
+/* DNSBL configuration for spam/abuse prevention */
+dnsbl {
+    host = "rbl.efnetrbl.org";
+    type = ipv4;
+    reject_reason = "Your IP is listed in EFNet RBL";
+};
+
+dnsbl {
+    host = "dnsbl.dronebl.org";
+    type = ipv4;
+    reject_reason = "Your IP is listed in DroneBL";
+};

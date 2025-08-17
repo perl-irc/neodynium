@@ -8,20 +8,24 @@ primary_region = "ord"
   memory = "512mb"
   cpus = 1
 
+[[restart]]
+  policy = "on-failure"
+
 [build]
-  dockerfile = "../../atheme/Dockerfile"
+  dockerfile = "atheme/Dockerfile"
 
 [mounts]
   source = "magnet_atheme_data"
-  destination = "/var/lib/atheme"
+  destination = "/opt/atheme/etc/"
 
 [env]
   SERVER_NAME = "magnet-atheme"
   ATHEME_NETWORK = "Magnet"
-  ATHEME_POSTGRES_HOST = "magnet-postgres.internal"
-  ATHEME_POSTGRES_DB = "atheme"
   ATHEME_HUB_SERVER = "magnet-9RL"
-  ATHEME_HUB_HOSTNAME = "magnet-9rl"
+  ATHEME_HUB_HOSTNAME = "magnet-9rl.internal"
+  TAILSCALE_DOMAIN = "camel-kanyu.ts.net"
+  ADMIN_NAME = "Chris Prather"
+  ADMIN_EMAIL = "chris@prather.org"
 
 [http_service]
   internal_port = 8080
@@ -30,10 +34,10 @@ primary_region = "ord"
   auto_start_machines = true
 
   [[http_service.checks]]
-    grace_period = "30s"
+    grace_period = "90s"
     interval = "15s"
     method = "GET"
-    timeout = "5s"
+    timeout = "10s"
     path = "/health"
 
 [[services]]

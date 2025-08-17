@@ -4,6 +4,8 @@
 
 use strict;
 use warnings;
+use utf8;
+use open ':std', ':encoding(UTF-8)';
 use Getopt::Long;
 
 sub get_username {
