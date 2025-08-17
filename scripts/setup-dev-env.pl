@@ -264,17 +264,26 @@ sub create_dev_postgres {
     # Use production postgres cluster with test users
     my $postgres_name = "magnet-postgres";
     
-    print "🐘 Using production Postgres cluster for development...\n";
+    print "🐘 Checking for Postgres cluster...\n";
     
-    # Check if production postgres exists
-    my $list_output = `flyctl mpg list --org magnet-irc 2>&1`;
-    if ($list_output =~ /$postgres_name/) {
-        print "✅ Production Postgres cluster $postgres_name is available\n";
+    # Check if production postgres exists (try both MPG and unmanaged)
+    my $mpg_output = `flyctl mpg list --org magnet-irc 2>&1`;
+    my $pg_output = `flyctl postgres list 2>&1`;
+    
+    if ($mpg_output =~ /$postgres_name/ || $pg_output =~ /$postgres_name/) {
+        print "✅ Postgres cluster $postgres_name is available\n";
         return 1;
     }
     
-    print "❌ Production Postgres cluster $postgres_name not found\n";
-    print "ℹ️  Please ensure production infrastructure is deployed first\n";
+    # Check if it exists as a regular app
+    my $app_check = `flyctl status --app $postgres_name 2>&1`;
+    if ($? == 0) {
+        print "✅ Postgres app $postgres_name exists\n";
+        return 1;
+    }
+    
+    print "⚠️  Postgres cluster $postgres_name not found\n";
+    print "ℹ️  To create it, run: flyctl postgres create --name magnet-postgres --region ord --org magnet-irc\n";
     print "ℹ️  Continuing without Postgres (apps will still be created)\n";
     return 0;
 }
