@@ -1,0 +1,121 @@
+/* ABOUTME: Solanum IRCd configuration template with environment variable substitution
+/* ABOUTME: Optimized for AMD EPYC with OpenSSL acceleration and Tailscale mesh networking
+
+/* Solanum IRCd Configuration Template for ${SERVER_NAME} */
+/* Optimized for AMD EPYC with OpenSSL acceleration */
+
+serverinfo {
+    name = "${SERVER_NAME}.kowloon.social";
+    sid = "${SERVER_SID}";
+    description = "${SERVER_DESCRIPTION}";
+    network_name = "Magnet";
+    network_desc = "Magnet IRC Network";
+    vhost = "0.0.0.0";
+    vhost6 = "::";
+};
+
+admin {
+    name = "Network Administrator";
+    description = "Magnet IRC Network";
+    email = "admin@kowloon.social";
+};
+
+/* Connection classes optimized for AMD EPYC performance */
+class "users" {
+    ping_time = 2 minutes;
+    number_per_ident = 10;
+    number_per_ip = 10;
+    number_per_ip_global = 50;
+    max_number = 3000;
+    sendq = 400 kbytes;
+};
+
+class "opers" {
+    ping_time = 5 minutes;
+    max_number = 1000;
+    sendq = 1 megabyte;
+};
+
+class "server" {
+    ping_time = 5 minutes;
+    connectfreq = 5 minutes;
+    max_number = 1;
+    sendq = 4 megabytes;
+};
+
+/* Listeners with OpenSSL SSL/TLS */
+listen { port = 6667; host = "0.0.0.0"; };
+listen { port = 6697; host = "0.0.0.0"; ssl = yes; };
+listen { port = 7000; host = "0.0.0.0"; ssl = yes; };
+listen { port = 8080; host = "0.0.0.0"; };
+
+/* Operator block */
+operator "admin" {
+    user = "*@*";
+    password = "${OPER_PASSWORD}";
+    flags = global_kill, remote, kline, unkline, gline, ungline,
+            die, restart, rehash, admin, operwall, wallops,
+            locops, mass_notice, remoteban;
+    snomask = "+Zbfkrsuy";
+    class = "opers";
+};
+
+/* Server linking via Tailscale (only for hub - 9RL) */
+connect "magnet-1EU.kowloon.social" {
+    host = "magnet-1eu";  /* Tailscale hostname */
+    send_password = "${LINK_PASSWORD_9RL_1EU}";
+    accept_password = "${LINK_PASSWORD_9RL_1EU}";
+    port = 7000;
+    hub_mask = "*";
+    class = "server";
+    flags = ssl;
+};
+
+/* Services linking via Tailscale (only for hub - 9RL) */
+service { name = "services.kowloon.social"; };
+connect "services.kowloon.social" {
+    host = "magnet-atheme";  /* Tailscale hostname */
+    send_password = "${SERVICES_PASSWORD}";
+    accept_password = "${SERVICES_PASSWORD}";
+    port = 6667;
+    class = "server";
+    flags = ssl;
+};
+
+/* General settings */
+general {
+    hide_error_messages = opers;
+    hide_spoof_ips = yes;
+    default_umodes = "+i";
+    default_operstring = "is an IRC Operator";
+    default_adminstring = "is a Server Administrator";
+    servicestring = "is a Network Service";
+    anti_nick_flood = yes;
+    max_nick_time = 20 seconds;
+    max_nick_changes = 5;
+    ts_warn_delta = 30 seconds;
+    ts_max_delta = 5 minutes;
+    collision_fnc = yes;
+    no_oper_flood = yes;
+    throttle_duration = 60 seconds;
+    throttle_count = 4;
+};
+
+/* Channel settings */
+channel {
+    use_invex = yes;
+    use_except = yes;
+    use_knock = yes;
+    use_forward = yes;
+    max_chans_per_user = 15;
+    max_bans = 100;
+    autochanmodes = "+nt";
+    displayed_usercount = 3;
+    strip_topic = yes;
+};
+
+/* Essential extensions */
+loadmodule "extensions/chm_sslonly";
+loadmodule "extensions/extb_account";
+loadmodule "extensions/extb_ssl";
+loadmodule "extensions/m_identify";
