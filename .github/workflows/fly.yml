@@ -9,6 +9,7 @@ on:
 
 env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
 
 jobs:
   test:
@@ -88,6 +89,11 @@ jobs:
           else
             echo "PostgreSQL already attached to magnet-atheme"
           fi
+        
+      - name: Set Tailscale Auth Key Secret
+        run: |
+          # Set Tailscale auth key as Fly.io secret
+          flyctl secrets set TAILSCALE_AUTHKEY="${TAILSCALE_AUTHKEY}" --app ${{ matrix.app }}
         
       - name: Deploy ${{ matrix.app }}
         run: flyctl deploy --config ${{ matrix.config }} --app ${{ matrix.app }} --remote-only
