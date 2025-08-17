@@ -179,21 +179,10 @@ fly machines restart --app magnet-atheme
 ### Device Cleanup
 
 #### Automatic Cleanup (Normal Operation)
-- Ephemeral devices are automatically removed when containers stop
-- No manual intervention required for normal deployments
+- **Ephemeral devices are automatically removed when containers stop**
+- **No manual intervention required** - this is the key benefit of ephemeral devices
 - Devices reappear with same hostnames when containers restart
-
-#### Manual Cleanup (Emergency)
-```bash
-# Force device logout and cleanup
-ssh root@magnet-9rl '/app/cleanup-tailscale.pl logout'
-
-# Check cleanup status
-ssh root@magnet-9rl '/app/cleanup-tailscale.pl status'
-
-# Or use the direct cleanup script
-scripts/cleanup-tailscale.pl cleanup
-```
+- Tailscale handles all lifecycle management automatically
 
 ### Access Audit
 
