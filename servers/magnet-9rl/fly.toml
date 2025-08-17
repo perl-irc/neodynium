@@ -27,10 +27,10 @@ primary_region = "ord"
   auto_start_machines = true
 
   [[http_service.checks]]
-    grace_period = "30s"
+    grace_period = "90s"
     interval = "15s"
     method = "GET"
-    timeout = "5s"
+    timeout = "10s"
     path = "/health"
 
 [[services]]

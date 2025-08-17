@@ -98,7 +98,7 @@ sub deploy_dev_app {
     print "🚀 Deploying $app_name ($config->{description})...\n";
     
     # Construct deploy command - deploy from project root for proper build context
-    my $deploy_cmd = "flyctl deploy . --config $config->{config} --app $app_name";
+    my $deploy_cmd = "flyctl deploy . --config $config->{config} --app $app_name --wait-timeout 300";
     $deploy_cmd .= " --remote-only" if $remote_only;
     
     print "Running: $deploy_cmd\n";
