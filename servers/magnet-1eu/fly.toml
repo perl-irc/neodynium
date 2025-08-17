@@ -9,7 +9,7 @@ primary_region = "ams"
   cpus = 1
 
 [build]
-  dockerfile = "Dockerfile.solanum"
+  dockerfile = "../../solanum/Dockerfile"
 
 [mounts]
   source = "magnet_1eu_data"

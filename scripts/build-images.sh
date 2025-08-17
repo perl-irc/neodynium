@@ -79,12 +79,12 @@ build_image() {
 
 validate_files() {
     local required_files=(
-        "Dockerfile.solanum"
-        "Dockerfile.atheme"
-        "ircd.conf.template"
-        "atheme.conf.template"
-        "start-solanum.sh"
-        "start-atheme.sh"
+        "solanum/Dockerfile"
+        "atheme/Dockerfile"
+        "solanum/ircd.conf.template"
+        "atheme/atheme.conf.template"
+        "solanum/entrypoint.sh"
+        "atheme/entrypoint.sh"
     )
     
     log_info "Validating required files..."
@@ -97,14 +97,14 @@ validate_files() {
     done
     
     # Check executable permissions on scripts
-    if [ ! -x "start-solanum.sh" ]; then
-        log_warn "start-solanum.sh is not executable, fixing..."
-        chmod +x start-solanum.sh
+    if [ ! -x "solanum/entrypoint.sh" ]; then
+        log_warn "solanum/entrypoint.sh is not executable, fixing..."
+        chmod +x solanum/entrypoint.sh
     fi
     
-    if [ ! -x "start-atheme.sh" ]; then
-        log_warn "start-atheme.sh is not executable, fixing..."
-        chmod +x start-atheme.sh
+    if [ ! -x "atheme/entrypoint.sh" ]; then
+        log_warn "atheme/entrypoint.sh is not executable, fixing..."
+        chmod +x atheme/entrypoint.sh
     fi
     
     log_info "All required files present and valid"
@@ -209,14 +209,14 @@ main() {
     
     case $TARGET in
         "solanum")
-            build_image "Dockerfile.solanum" "magnet-solanum" || failed_builds+=("solanum")
+            build_image "solanum/Dockerfile" "magnet-solanum" || failed_builds+=("solanum")
             ;;
         "atheme")
-            build_image "Dockerfile.atheme" "magnet-atheme" || failed_builds+=("atheme")
+            build_image "atheme/Dockerfile" "magnet-atheme" || failed_builds+=("atheme")
             ;;
         "all")
-            build_image "Dockerfile.solanum" "magnet-solanum" || failed_builds+=("solanum")
-            build_image "Dockerfile.atheme" "magnet-atheme" || failed_builds+=("atheme")
+            build_image "solanum/Dockerfile" "magnet-solanum" || failed_builds+=("solanum")
+            build_image "atheme/Dockerfile" "magnet-atheme" || failed_builds+=("atheme")
             ;;
     esac
     
