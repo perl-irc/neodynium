@@ -5,7 +5,7 @@ app = "magnet-atheme"
 primary_region = "ord"
 
 [vm]
-  memory = "1gb"
+  memory = "512mb"
   cpus = 1
 
 [build]
