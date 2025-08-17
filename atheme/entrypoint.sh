@@ -38,6 +38,16 @@ source /opt/atheme/etc/passwords.conf
 
 # Process atheme.conf template with generated passwords
 echo "Instantiating atheme.conf from template..."
+
+# Extract database details from DATABASE_URL if available
+if [ -n "$DATABASE_URL" ]; then
+    echo "Using DATABASE_URL for PostgreSQL connection"
+    # Parse DATABASE_URL: postgres://user:pass@host:port/dbname
+    export ATHEME_POSTGRES_HOST=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):.*/\1/p')
+    export ATHEME_POSTGRES_DB=$(echo "$DATABASE_URL" | sed -n 's/.*\/\([^?]*\).*/\1/p')
+    echo "Extracted from DATABASE_URL: host=$ATHEME_POSTGRES_HOST, db=$ATHEME_POSTGRES_DB"
+fi
+
 envsubst '${ATHEME_NETWORK} ${ATHEME_NETWORK_DOMAIN} ${SERVICES_PASSWORD} ${OPERATOR_PASSWORD} ${ATHEME_POSTGRES_HOST} ${ATHEME_POSTGRES_DB} ${ATHEME_HUB_SERVER} ${ATHEME_HUB_HOSTNAME}' \
     < /opt/atheme/etc/atheme.conf.template \
     > /opt/atheme/etc/atheme.conf

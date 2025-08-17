@@ -303,6 +303,11 @@ sub attach_dev_postgres {
     
     if ($? == 0 || $output =~ /already attached/i) {
         print "✅ Postgres cluster attached to $atheme_app\n";
+        
+        # Note: Fly MPG attach creates an auto-named database based on app name
+        # For dev environments, atheme will use this auto-created database
+        print "ℹ️  Atheme will use auto-created database from MPG attachment\n";
+        
         return 1;
     } elsif ($output =~ /not found/i) {
         print "⚠️  Postgres cluster not accessible - may need manual attachment\n";
