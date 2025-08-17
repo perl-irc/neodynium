@@ -1,0 +1,75 @@
+# ABOUTME: Atheme IRC services container with PostgreSQL support and OpenSSL optimization
+# ABOUTME: Multi-stage build optimized for AMD EPYC with Tailscale integration
+
+# Build stage - Atheme with OpenSSL for AMD EPYC
+FROM alpine:latest as builder
+
+# Install build dependencies
+RUN apk update && apk add --no-cache \
+    build-base \
+    autoconf \
+    automake \
+    libtool \
+    pkgconfig \
+    openssl-dev \
+    postgresql-dev \
+    pcre-dev \
+    git \
+    && rm -rf /var/cache/apk/*
+
+# Build Atheme with OpenSSL support
+WORKDIR /tmp
+RUN git clone https://github.com/atheme/atheme.git
+WORKDIR /tmp/atheme
+ENV CFLAGS="-march=znver2 -O3"
+RUN ./configure --prefix=/opt/atheme \
+    --enable-contrib \
+    --with-pcre \
+    --enable-ssl \
+    --enable-aes \
+    --with-postgresql
+RUN make -j$(nproc) && make install
+
+# Production stage
+FROM alpine:latest
+
+# Install runtime dependencies
+RUN apk update && apk add --no-cache \
+    openssl \
+    postgresql-client \
+    pcre \
+    ca-certificates \
+    iptables \
+    ip6tables \
+    pwgen \
+    gettext \
+    bash \
+    su-exec \
+    netcat-openbsd \
+    && rm -rf /var/cache/apk/*
+
+# Copy Atheme from builder
+COPY --from=builder /opt/atheme /opt/atheme
+
+# Copy Tailscale binaries from official image
+COPY --from=tailscale/tailscale:latest /usr/local/bin/tailscaled /usr/local/bin/tailscaled
+COPY --from=tailscale/tailscale:latest /usr/local/bin/tailscale /usr/local/bin/tailscale
+
+# Create directories
+RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
+RUN mkdir -p /opt/atheme/etc
+
+# Create atheme user
+RUN adduser -D -s /bin/false atheme
+RUN chown -R atheme:atheme /opt/atheme
+
+# Copy configuration templates and startup script
+COPY atheme.conf.template /opt/atheme/etc/atheme.conf.template
+COPY start-atheme.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+WORKDIR /opt/atheme
+
+EXPOSE 8080
+
+CMD ["/app/start.sh"]
