@@ -17,7 +17,7 @@ my %EXPECTED_APPS = (
     },
     'magnet-1eu' => {
         region => 'ams',
-        memory => '1gb',
+        memory => '512mb',
         cpus => 1,
         volume_size => 3,
         ports => [6667, 6697, 7000, 8080],

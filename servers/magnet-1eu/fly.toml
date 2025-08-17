@@ -5,7 +5,7 @@ app = "magnet-1eu"
 primary_region = "ams"
 
 [vm]
-  memory = "1gb"
+  memory = "512mb"
   cpus = 1
 
 [build]
