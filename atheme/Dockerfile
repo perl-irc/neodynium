@@ -35,7 +35,6 @@ RUN cd /atheme-src && \
     autoreconf -fiv && \
     ./configure \
         --prefix=/atheme \
-        --enable-contrib \
         --with-postgresql \
         --with-pcre \
         --enable-ssl && \
