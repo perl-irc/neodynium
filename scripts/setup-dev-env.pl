@@ -282,8 +282,8 @@ sub create_dev_postgres {
         return 1;
     }
     
-    print "⚠️  Postgres cluster $postgres_name not found\n";
-    print "ℹ️  To create it, run: flyctl postgres create --name magnet-postgres --region ord --org magnet-irc\n";
+    print "⚠️  Postgres cluster $postgres_name not found in accessible context\n";
+    print "ℹ️  If the cluster exists but isn't accessible, check organization permissions\n";
     print "ℹ️  Continuing without Postgres (apps will still be created)\n";
     return 0;
 }
@@ -297,15 +297,19 @@ sub attach_dev_postgres {
     print "🔗 Attaching production Postgres cluster to $atheme_app...\n";
     print "ℹ️  Note: Per-user database isolation will be handled at the application level\n";
     
-    # Attach the shared cluster (creates DATABASE_URL environment variable)
+    # Try to attach the shared cluster (creates DATABASE_URL environment variable)
     my $cmd = "flyctl mpg attach $postgres_name --app $atheme_app 2>&1";
     my $output = `$cmd`;
     
     if ($? == 0 || $output =~ /already attached/i) {
         print "✅ Postgres cluster attached to $atheme_app\n";
         return 1;
+    } elsif ($output =~ /not found/i) {
+        print "⚠️  Postgres cluster not accessible - may need manual attachment\n";
+        print "ℹ️  If cluster exists, try: flyctl mpg attach <cluster-id> --app $atheme_app\n";
+        return 1; # Not fatal - continue without Postgres
     } else {
-        print "⚠️  Failed to attach Postgres (may already be attached):\n$output\n";
+        print "⚠️  Failed to attach Postgres:\n$output\n";
         return 1; # Not fatal - continue without Postgres
     }
 }
