@@ -21,15 +21,15 @@ The Magnet IRC Network uses Tailscale for secure administrative access to IRC se
 
 ## Prerequisites
 
-### Tailscale Account Setup
-1. Create a Tailscale account at https://tailscale.com
-2. Generate ephemeral auth keys at https://login.tailscale.com/admin/settings/keys
-3. Configure auth key settings:
-   - ✅ **Ephemeral**: Devices automatically removed when offline
-   - ✅ **Pre-approved**: Skip manual device approval (optional)
-   - ⏱️ **90-day expiration**: Set reasonable expiration time
+### GitHub Organization Membership
+Administrative access to the Magnet IRC Network is granted through membership in the **perl-irc GitHub Organization**. No separate Tailscale account is required.
 
-### GitHub Repository Secrets Configuration
+**To gain admin access:**
+1. Request membership in the perl-irc GitHub Organization
+2. Once approved, you'll automatically have SSH access to all IRC infrastructure
+3. Admin access is managed through GitHub Teams and repository permissions
+
+### Infrastructure Secrets Configuration (Maintainers Only)
 Set both Fly.io API token and Tailscale auth key as GitHub repository secrets for CI/CD deployment:
 
 ```bash
@@ -51,6 +51,20 @@ FLY_TOKEN="fo1_xxxxxxxxxxxxxxxxxxxxxx"
 ```
 
 **Note**: The GitHub Actions workflow will automatically set these as Fly.io secrets during deployment.
+
+## How GitHub-Based Access Works
+
+The IRC infrastructure uses GitHub organization membership for access control:
+
+1. **Tailscale Integration**: The perl-irc organization's Tailscale network is configured to allow SSH access to organization members
+2. **Automatic Access**: No manual device approval or separate Tailscale account required
+3. **GitHub Teams**: Access levels can be managed through GitHub Teams within the organization
+4. **SSH Keys**: Your GitHub SSH keys are automatically trusted for infrastructure access
+
+### Access Levels
+- **perl-irc Members**: SSH access to all IRC servers and services
+- **Repository Maintainers**: Additional access to secrets management and deployment controls
+- **Organization Owners**: Full administrative access to infrastructure and Tailscale network
 
 ## Administrative Access Methods
 
@@ -160,7 +174,7 @@ ssh root@magnet-9rl 'cat /proc/cpuinfo | grep flags'
 
 ## Security Procedures
 
-### Auth Key Management
+### Auth Key Management (Maintainers Only)
 
 #### Key Rotation (Recommended: 90 days)
 ```bash
