@@ -272,27 +272,30 @@ sub cleanup_dev_environment {
 sub create_dev_postgres {
     my ($username) = @_;
     
-    my $postgres_name = "magnet-postgres-$username";
+    # Use testuser-specific postgres cluster 
+    my $postgres_name = "magnet-postgres-testuser";
     
-    print "🐘 Setting up Managed Postgres for development...\n";
+    print "🐘 Setting up shared test Postgres for development...\n";
     
-    # Check if managed postgres already exists
+    # Check if shared test postgres exists
     my $list_output = `flyctl mpg list --org magnet-irc 2>&1`;
     if ($list_output =~ /$postgres_name/) {
-        print "✅ Managed Postgres $postgres_name already exists\n";
+        print "✅ Shared test Postgres cluster $postgres_name is available\n";
         return 1;
     }
     
-    print "📦 Creating Managed Postgres cluster $postgres_name...\n";
+    print "📦 Creating shared test Postgres cluster (one-time setup)...\n";
+    print "ℹ️  This cluster will be shared across all test environments\n";
     
     my $cmd = "flyctl mpg create --name $postgres_name --region ord --org magnet-irc";
     my $output = `$cmd 2>&1`;
     
     if ($? == 0) {
-        print "✅ Created Managed Postgres cluster $postgres_name\n";
+        print "✅ Created shared test Postgres cluster $postgres_name\n";
         return 1;
     } else {
-        print "❌ Failed to create Managed Postgres cluster:\n$output\n";
+        print "❌ Failed to create shared test Postgres cluster:\n$output\n";
+        print "ℹ️  Continuing without Postgres (apps will still be created)\n";
         return 0;
     }
 }
@@ -300,20 +303,22 @@ sub create_dev_postgres {
 sub attach_dev_postgres {
     my ($username) = @_;
     
-    my $postgres_name = "magnet-postgres-$username";
+    my $postgres_name = "magnet-postgres-testuser";
     my $atheme_app = get_dev_app_name('magnet-services', $username);
+    my $database_name = "magnet_dev_$username";
     
-    print "🔗 Attaching Postgres to $atheme_app...\n";
+    print "🔗 Attaching shared Postgres cluster with per-user database $database_name...\n";
     
-    my $cmd = "flyctl mpg attach $postgres_name --app $atheme_app 2>&1";
+    # Attach the shared cluster and create a per-user database
+    my $cmd = "flyctl mpg attach $postgres_name --app $atheme_app --database-name $database_name 2>&1";
     my $output = `$cmd`;
     
     if ($? == 0 || $output =~ /already attached/i) {
-        print "✅ Postgres attached to $atheme_app\n";
+        print "✅ Postgres cluster attached to $atheme_app with database $database_name\n";
         return 1;
     } else {
         print "⚠️  Failed to attach Postgres (may already be attached):\n$output\n";
-        return 1; # Not fatal
+        return 1; # Not fatal - continue without Postgres
     }
 }
 

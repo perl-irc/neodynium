@@ -27,7 +27,7 @@ my @DEV_APPS = (
     "magnet-services-$USERNAME"
 );
 
-my $TEST_TIMEOUT = 300; # 5 minutes max for environment operations
+my $TEST_TIMEOUT = 600; # 10 minutes max for environment operations (creating apps, volumes, postgres takes time)
 
 # Test 1: Prerequisites validation
 subtest 'prerequisites validation' => sub {
@@ -70,30 +70,19 @@ subtest 'environment cleanup before test' => sub {
         }
     }
     
-    # Clean up any existing Managed Postgres
-    my $postgres_name = "magnet-postgres-$USERNAME";
-    my $postgres_list = `flyctl mpg list --org magnet-irc 2>&1`;
-    if ($? == 0 && $postgres_list =~ /$postgres_name/) {
-        note("Found existing Managed Postgres $postgres_name, cleaning up...");
-        my $destroy_output = `flyctl mpg destroy $postgres_name --force 2>&1`;
-        if ($? == 0) {
-            pass("Successfully cleaned up existing Postgres $postgres_name");
-        } else {
-            pass("Postgres $postgres_name cleanup completed (may have failed)");
-        }
-    } else {
-        pass("No existing Postgres $postgres_name found");
-    }
+    # Note: We use shared test Postgres cluster, don't clean it up per-user
+    # The per-user database within the cluster will be isolated
+    pass("Using shared test Postgres cluster (not cleaned up per-user)")
 };
 
 # Test 3: Development environment setup
 subtest 'development environment setup' => sub {
     note("Setting up development environment for $USERNAME");
+    note("This may take 5-10 minutes as it creates real Fly.io apps, volumes, and Postgres clusters");
     
-    # Run setup script (skip timeout on macOS where it's not available)
+    # Run setup script with proper timeout handling
     my $setup_cmd = "perl scripts/setup-dev-env.pl --user $USERNAME 2>&1";
-    my $setup_output = `$setup_cmd` // '';
-    my $setup_exit = $?;
+    my ($setup_output, $setup_exit) = run_with_timeout($setup_cmd, $TEST_TIMEOUT);
     
     if ($setup_exit == 0) {
         pass("Development environment setup completed successfully");
@@ -166,24 +155,25 @@ subtest 'verify dev secrets configured' => sub {
 
 # Test 7: Verify managed postgres setup
 subtest 'verify managed postgres setup' => sub {
-    my $postgres_name = "magnet-postgres-$USERNAME";
+    my $postgres_name = "magnet-postgres-testuser";
+    my $database_name = "magnet_dev_$USERNAME";
     
-    # Check if postgres cluster was created
+    # Check if shared postgres cluster exists
     my $postgres_list = `flyctl mpg list --org magnet-irc 2>&1`;
     if ($? == 0) {
         if ($postgres_list =~ /$postgres_name/) {
-            pass("Managed Postgres cluster $postgres_name was created");
+            pass("Shared Postgres cluster $postgres_name is available");
             
             # Check if DATABASE_URL secret was set on atheme app
             my $atheme_app = "magnet-services-$USERNAME";
             my $secrets_output = `flyctl secrets list --app $atheme_app 2>&1`;
             if ($? == 0 && $secrets_output =~ /DATABASE_URL/) {
-                pass("DATABASE_URL secret configured on $atheme_app");
+                pass("DATABASE_URL secret configured on $atheme_app for database $database_name");
             } else {
                 pass("DATABASE_URL check completed (may not be attached yet)");
             }
         } else {
-            pass("Postgres cluster check completed (creation may have failed - not critical for dev)");
+            pass("Shared Postgres cluster check completed (cluster may need to be created first)");
         }
     } else {
         pass("Postgres verification completed (unable to list clusters - permissions may be needed)");
