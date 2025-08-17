@@ -49,6 +49,28 @@ echo "Atheme configuration instantiated successfully"
 echo "Tailscale hostname: ${HOSTNAME}"
 echo "Services password: ${SERVICES_PASSWORD}"
 
+# Wait for PostgreSQL to be available (if DATABASE_URL is set)
+if [ -n "$DATABASE_URL" ]; then
+    echo "Waiting for PostgreSQL to be available..."
+    max_attempts=30
+    attempt=1
+    
+    while [ $attempt -le $max_attempts ]; do
+        if pg_isready -d "$DATABASE_URL" >/dev/null 2>&1; then
+            echo "PostgreSQL is ready!"
+            break
+        fi
+        
+        echo "PostgreSQL not ready, attempt $attempt/$max_attempts..."
+        sleep 2
+        attempt=$((attempt + 1))
+    done
+    
+    if [ $attempt -gt $max_attempts ]; then
+        echo "WARNING: PostgreSQL not available after $max_attempts attempts, proceeding anyway"
+    fi
+fi
+
 # Simple HTTP health endpoint
 (while true; do
     echo -e "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nAtheme Services Health OK" | nc -l -p 8080 -q 1
