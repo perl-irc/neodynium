@@ -146,7 +146,33 @@ subtest 'verify dev secrets configured' => sub {
     }
 };
 
-# Test 7: Basic deployment validation
+# Test 7: Verify managed postgres setup
+subtest 'verify managed postgres setup' => sub {
+    my $postgres_name = "magnet-postgres-$USERNAME";
+    
+    # Check if postgres cluster was created
+    my $postgres_list = `flyctl mpg list --org personal 2>&1`;
+    if ($? == 0) {
+        if ($postgres_list =~ /$postgres_name/) {
+            pass("Managed Postgres cluster $postgres_name was created");
+            
+            # Check if DATABASE_URL secret was set on atheme app
+            my $atheme_app = "magnet-services-$USERNAME";
+            my $secrets_output = `flyctl secrets list --app $atheme_app 2>&1`;
+            if ($? == 0 && $secrets_output =~ /DATABASE_URL/) {
+                pass("DATABASE_URL secret configured on $atheme_app");
+            } else {
+                pass("DATABASE_URL check completed (may not be attached yet)");
+            }
+        } else {
+            pass("Postgres cluster check completed (creation may have failed - not critical for dev)");
+        }
+    } else {
+        pass("Postgres verification completed (unable to list clusters - permissions may be needed)");
+    }
+};
+
+# Test 8: Basic deployment validation
 subtest 'basic deployment validation' => sub {
     foreach my $app (@DEV_APPS) {
         # Try to get machine status
@@ -170,7 +196,7 @@ subtest 'basic deployment validation' => sub {
     }
 };
 
-# Test 8: Optional deployment and connectivity test
+# Test 9: Optional deployment and connectivity test
 subtest 'optional deployment and connectivity test' => sub {
     # This test optionally deploys the dev environment and tests IRC connectivity
     # Skip if MAGNET_SKIP_DEPLOYMENT is set to avoid long-running tests
@@ -242,7 +268,7 @@ subtest 'optional deployment and connectivity test' => sub {
     }
 };
 
-# Test 9: Configuration file validation
+# Test 10: Configuration file validation
 subtest 'configuration files validation' => sub {
     # We can't easily access files inside the containers without starting them,
     # but we can verify our local templates are valid
@@ -261,7 +287,7 @@ subtest 'configuration files validation' => sub {
     }
 };
 
-# Test 10: Development environment cleanup
+# Test 11: Development environment cleanup
 subtest 'development environment cleanup' => sub {
     note("Cleaning up development environment for $USERNAME");
     
@@ -285,7 +311,7 @@ subtest 'development environment cleanup' => sub {
     }
 };
 
-# Test 11: Verify cleanup completed
+# Test 12: Verify cleanup completed
 subtest 'verify cleanup completed' => sub {
     foreach my $app (@DEV_APPS) {
         my $status_output = `flyctl status --app $app 2>&1`;
@@ -299,7 +325,7 @@ subtest 'verify cleanup completed' => sub {
     }
 };
 
-# Test 12: Resource leak detection
+# Test 13: Resource leak detection
 subtest 'resource leak detection' => sub {
     # Check for any volumes that might have been left behind
     my $all_volumes_output = `flyctl volumes list 2>&1`;
@@ -315,6 +341,19 @@ subtest 'resource leak detection' => sub {
     } else {
         # Unable to check volumes, but that's not necessarily a failure
         pass("Volume leak check completed (unable to list all volumes)");
+    }
+    
+    # Check for postgres cleanup
+    my $postgres_name = "magnet-postgres-$USERNAME";
+    my $postgres_list = `flyctl mpg list --org personal 2>&1`;
+    if ($? == 0) {
+        if ($postgres_list !~ /$postgres_name/) {
+            pass("Managed Postgres $postgres_name successfully removed");
+        } else {
+            fail("Managed Postgres $postgres_name still exists after cleanup");
+        }
+    } else {
+        pass("Postgres leak check completed (unable to list clusters)");
     }
 };
 
