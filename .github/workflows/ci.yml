@@ -19,16 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
           
-      - name: Run Infrastructure Tests
-        run: prove -v t/00-infrastructure.t
-        
-      - name: Run Docker Build Tests
-        run: prove -v t/01-docker-builds.t
-        
-      - name: Run Tailscale Integration Tests
-        run: prove -v t/02-tailscale-integration.t
-        
-      - name: Run Complete Test Suite
+      - name: Run Test Suite
         run: prove -v t/
         
   lint:
