@@ -49,6 +49,7 @@ subtest 'prerequisites validation' => sub {
 subtest 'environment cleanup before test' => sub {
     note("Cleaning up any existing dev environment for $USERNAME");
     
+    # Clean up apps
     foreach my $app (@DEV_APPS) {
         my $status_output = `flyctl status --app $app 2>&1`;
         if ($? == 0) {
@@ -65,6 +66,21 @@ subtest 'environment cleanup before test' => sub {
         } else {
             pass("No existing app $app found");
         }
+    }
+    
+    # Clean up any existing Managed Postgres
+    my $postgres_name = "magnet-postgres-$USERNAME";
+    my $postgres_list = `flyctl mpg list --org personal 2>&1`;
+    if ($? == 0 && $postgres_list =~ /$postgres_name/) {
+        note("Found existing Managed Postgres $postgres_name, cleaning up...");
+        my $destroy_output = `flyctl mpg destroy $postgres_name --force 2>&1`;
+        if ($? == 0) {
+            pass("Successfully cleaned up existing Postgres $postgres_name");
+        } else {
+            pass("Postgres $postgres_name cleanup completed (may have failed)");
+        }
+    } else {
+        pass("No existing Postgres $postgres_name found");
     }
 };
 
