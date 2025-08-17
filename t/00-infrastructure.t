@@ -203,10 +203,12 @@ subtest 'github actions workflow' => sub {
     like($content, qr/prove.*t/i, 'Workflow runs infrastructure tests');
 };
 
-# Test 12: Deployment automation scripts exist and are executable
-subtest 'deployment automation scripts' => sub {
+# Test 12: Development environment scripts exist and are executable
+subtest 'development environment scripts' => sub {
     my @scripts = (
-        'scripts/deploy-magnet.pl',
+        'scripts/deploy-dev.pl',
+        'scripts/setup-dev-env.pl',
+        'scripts/cleanup-dev-env.pl',
         'scripts/setup-deploy-tokens.pl'
     );
     
@@ -217,19 +219,19 @@ subtest 'deployment automation scripts' => sub {
     }
 };
 
-# Test 13: Deployment script configuration
-subtest 'deployment script configuration' => sub {
-    my $script_path = 'scripts/deploy-magnet.pl';
-    skip_all "deploy-magnet.pl not found" unless -f $script_path;
+# Test 13: Development deployment script configuration
+subtest 'development deployment script configuration' => sub {
+    my $script_path = 'scripts/deploy-dev.pl';
+    skip_all "deploy-dev.pl not found" unless -f $script_path;
     
     open my $fh, '<', $script_path or die "Can't open $script_path: $!";
     my $content = do { local $/; <$fh> };
     close $fh;
     
-    like($content, qr/magnet-9rl.*magnet-1eu.*magnet-atheme/s, 'Includes all three applications');
+    like($content, qr/per.*user.*dev/i, 'Implements per-user development environments');
     like($content, qr/health.*check/i, 'Implements health checking');
-    like($content, qr/verify.*secrets/i, 'Includes secrets verification');
     like($content, qr/remote.*only/i, 'Uses remote builders by default');
+    like($content, qr/magnet-hub.*magnet-services/s, 'Includes dev applications');
 };
 
 # Test 14: Token management script functionality
@@ -244,6 +246,21 @@ subtest 'token management script' => sub {
     like($content, qr/tokens.*create.*deploy/i, 'Creates deploy tokens');
     like($content, qr/GitHub.*Actions/i, 'Includes GitHub Actions setup');
     like($content, qr/revoke.*tokens/i, 'Supports token revocation');
+};
+
+# Test 15: Development environment setup script
+subtest 'development environment setup script' => sub {
+    my $script_path = 'scripts/setup-dev-env.pl';
+    skip_all "setup-dev-env.pl not found" unless -f $script_path;
+    
+    open my $fh, '<', $script_path or die "Can't open $script_path: $!";
+    my $content = do { local $/; <$fh> };
+    close $fh;
+    
+    like($content, qr/per.*user.*dev/i, 'Implements per-user development setup');
+    like($content, qr/volume.*create/i, 'Creates development volumes');
+    like($content, qr/secrets.*set/i, 'Configures development secrets');
+    like($content, qr/cleanup/i, 'Includes cleanup functionality');
 };
 
 done_testing();

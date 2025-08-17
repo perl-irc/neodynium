@@ -165,49 +165,46 @@ fly tokens create deploy --app magnet-atheme
    - Go to GitHub → Actions → "Deploy to Fly.io"
    - Click "Run workflow" for manual deployment
 
-### Manual Deployment
+### Development Environment Setup
 
-For development or troubleshooting, use the deployment automation script:
-
-```bash
-# Preview deployment (dry-run)
-scripts/deploy-magnet.pl --dry-run
-
-# Full deployment with remote builders (recommended)
-scripts/deploy-magnet.pl
-
-# Deploy with local builds (if needed)
-scripts/deploy-magnet.pl --local-build
-
-# Deploy to specific organization
-scripts/deploy-magnet.pl --org my-organization
-```
-
-### Traditional Manual Deployment
-
-1. Deploy each application individually:
+For local development, use per-user development environments:
 
 ```bash
-fly deploy --app magnet-9rl --config servers/magnet-9rl/fly.toml --remote-only
-fly deploy --app magnet-1eu --config servers/magnet-1eu/fly.toml --remote-only
-fly deploy --app magnet-atheme --config servers/magnet-atheme/fly.toml --remote-only
+# Set up your personal dev environment (one-time)
+scripts/setup-dev-env.pl
+
+# Deploy to your dev environment  
+scripts/deploy-dev.pl
+
+# List your dev apps
+scripts/deploy-dev.pl --list
+
+# Preview deployment changes
+scripts/deploy-dev.pl --dry-run
+
+# Clean up dev environment when done
+scripts/cleanup-dev-env.pl
 ```
 
-2. Verify deployments:
+**Important**: Development environments are single-region (ord) and completely isolated from production.
 
-```bash
-fly status --app magnet-9rl
-fly status --app magnet-1eu
-fly status --app magnet-atheme
-```
+## Development vs Production Separation
 
-3. Check health endpoints:
+### Development Environments
+- **Purpose**: Individual developer testing and experimentation
+- **Naming**: `magnet-hub-<username>`, `magnet-services-<username>`
+- **Region**: Single region (ord) for simplicity
+- **Management**: Local scripts (`scripts/setup-dev-env.pl`, `scripts/deploy-dev.pl`)
+- **Data**: Ephemeral, safe to destroy and recreate
 
-```bash
-curl https://magnet-9rl.fly.dev/health
-curl https://magnet-1eu.fly.dev/health
-curl https://magnet-atheme.fly.dev/health
-```
+### Production Environment  
+- **Purpose**: Live IRC network serving users
+- **Naming**: `magnet-9rl`, `magnet-1eu`, `magnet-atheme`
+- **Regions**: Multi-region (ord, ams) for global coverage
+- **Management**: GitHub Actions only (automated on push to main)
+- **Data**: Persistent, protected with backups and rollback procedures
+
+**Important**: Never deploy directly to production apps using local tools. Production deployments happen automatically via GitHub Actions when code is pushed to the main branch.
 
 ## CI/CD Best Practices
 
