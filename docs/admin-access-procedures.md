@@ -258,6 +258,23 @@ ssh root@magnet-9rl 'ip addr show tailscale0'
 
 ## Emergency Procedures
 
+### Hub Server Failover
+If the primary hub server (magnet-9rl) needs to be changed due to failure or maintenance:
+
+```bash
+# Update Atheme services to connect to backup hub
+fly secrets set ATHEME_HUB_SERVER=magnet-1EU --app magnet-atheme
+fly secrets set ATHEME_HUB_HOSTNAME=magnet-1eu --app magnet-atheme
+
+# Restart Atheme to apply new hub configuration
+fly machines restart --app magnet-atheme
+
+# Verify services connection to new hub
+fly ssh console --app magnet-atheme -C 'grep uplink /opt/atheme/etc/atheme.conf'
+```
+
+**Note**: Ensure the target hub server is configured to accept services connections before switching.
+
 ### Complete Network Isolation
 If Tailscale access needs to be completely disabled:
 

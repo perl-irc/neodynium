@@ -246,7 +246,8 @@ subtest 'configuration template syntax' => sub {
             like($content, qr/sid.*\$\{SERVER_SID\}/i, "$component: Template includes server ID");
         } elsif ($component eq 'atheme') {
             like($content, qr/\$\{SERVICES_PASSWORD\}/i, "$component: Template includes services password");
-            like($content, qr/\$\{DATABASE_URL\}/i, "$component: Template includes database URL");
+            like($content, qr/\$\{ATHEME_POSTGRES_HOST\}/i, "$component: Template includes database host");
+            like($content, qr/\$\{ATHEME_HUB_SERVER\}/i, "$component: Template includes configurable hub server");
         }
     }
 };
