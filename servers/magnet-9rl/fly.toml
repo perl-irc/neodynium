@@ -9,8 +9,7 @@ primary_region = "ord"
   cpus = 1
 
 [build]
-  dockerfile = "solanum/Dockerfile"
-  buildfolder = "../.."
+  dockerfile = "../../solanum/Dockerfile"
 
 [mounts]
   source = "magnet_9rl_data"
