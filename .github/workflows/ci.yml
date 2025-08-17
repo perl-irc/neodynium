@@ -1,7 +1,7 @@
 # ABOUTME: GitHub Actions workflow for running tests on PRs and main branch
 # ABOUTME: Comprehensive test suite validation for Docker builds and Tailscale integration
 
-name: Test Suite
+name: CI
 
 on:
   push:
