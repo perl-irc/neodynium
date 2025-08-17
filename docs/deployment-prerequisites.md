@@ -149,9 +149,10 @@ fly tokens create deploy --app magnet-9rl
 fly tokens create deploy --app magnet-1eu  
 fly tokens create deploy --app magnet-atheme
 
-# Add to GitHub repository secrets as FLY_API_TOKEN
+# Add to GitHub repository secrets
 # Go to GitHub repo → Settings → Secrets → Actions
 # Create new secret: FLY_API_TOKEN = <your-deploy-token>
+# Create new secret: TAILSCALE_AUTHKEY = <your-ephemeral-auth-key>
 ```
 
 2. **Automatic Deployment**:
