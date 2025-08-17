@@ -75,14 +75,16 @@ subtest 'environment cleanup before test' => sub {
     pass("Using production Postgres cluster (not cleaned up per-user)")
 };
 
-# Test 3: Development environment setup
+# Test 3: Development environment setup (CRITICAL - must pass for other tests to work)
+note("Setting up development environment for $USERNAME");
+note("This may take 5-10 minutes as it creates real Fly.io apps, volumes, and Postgres clusters");
+
+# Run setup script with proper timeout handling
+my $setup_cmd = "perl scripts/setup-dev-env.pl --user $USERNAME 2>&1";
+my ($setup_output, $setup_exit) = run_with_timeout($setup_cmd, $TEST_TIMEOUT);
+
 subtest 'development environment setup' => sub {
-    note("Setting up development environment for $USERNAME");
-    note("This may take 5-10 minutes as it creates real Fly.io apps, volumes, and Postgres clusters");
-    
-    # Run setup script with proper timeout handling
-    my $setup_cmd = "perl scripts/setup-dev-env.pl --user $USERNAME 2>&1";
-    my ($setup_output, $setup_exit) = run_with_timeout($setup_cmd, $TEST_TIMEOUT);
+    plan tests => 1;
     
     if ($setup_exit == 0) {
         pass("Development environment setup completed successfully");
@@ -90,9 +92,14 @@ subtest 'development environment setup' => sub {
     } else {
         fail("Development environment setup failed with exit code $setup_exit");
         note("Setup error output: $setup_output");
-        bail_out("Setup failed - cannot proceed with integration tests");
     }
 };
+
+# Critical failure check - bail out if setup failed
+if ($setup_exit != 0) {
+    diag("CRITICAL: Setup failed, cannot proceed with integration tests");
+    bail_out("Setup failed - cannot proceed with integration tests");
+}
 
 # Test 4: Verify apps are created and running
 subtest 'verify dev apps created and status' => sub {
