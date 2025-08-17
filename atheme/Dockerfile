@@ -21,14 +21,18 @@ RUN apk add --no-cache \
     openssl-dev \
     postgresql-dev \
     pcre-dev \
+    autoconf \
+    automake \
+    libtool \
     git
 
 # Checkout from Git using tagged release (avoids GIT-Access.txt issue)
 RUN git clone https://github.com/atheme/atheme -b v${ATHEME_VERSION} --depth=1 /atheme-src --recursive
 RUN cd /atheme-src/libmowgli-2 && git pull origin master
 
-# Configure with PostgreSQL support and build
+# Generate autotools files if needed and configure with PostgreSQL support
 RUN cd /atheme-src && \
+    autoreconf -fiv && \
     ./configure \
         --prefix=/atheme \
         --enable-contrib \
