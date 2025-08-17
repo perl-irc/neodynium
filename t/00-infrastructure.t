@@ -206,7 +206,7 @@ subtest 'github actions workflow' => sub {
     like($content, qr/on:\s*\n\s*push:/m, 'Workflow triggers on push');
     like($content, qr/FLY_API_TOKEN/i, 'Workflow uses deploy token');
     like($content, qr/--remote-only/i, 'Workflow uses remote builders');
-    like($content, qr/prove.*t/i, 'Workflow runs infrastructure tests');
+    # Tests are now in separate test.yml workflow
 };
 
 # Test 12: Development environment scripts exist and are executable
