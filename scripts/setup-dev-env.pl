@@ -250,20 +250,9 @@ sub cleanup_dev_environment {
         }
     }
     
-    # Clean up Managed Postgres
-    my $postgres_name = "magnet-postgres-$username";
-    my $list_output = `flyctl mpg list --org magnet-irc 2>&1`;
-    if ($list_output =~ /$postgres_name/) {
-        print "Destroying Managed Postgres $postgres_name...\n";
-        my $cmd = "flyctl mpg destroy $postgres_name --force";
-        my $output = `$cmd 2>&1`;
-        if ($? == 0) {
-            print "✅ Destroyed Managed Postgres $postgres_name\n";
-            $cleanup_count++;
-        } else {
-            print "❌ Failed to destroy Postgres:\n$output\n";
-        }
-    }
+    # Note: We use shared testuser Postgres cluster, don't destroy it during cleanup
+    # The per-user database within the cluster provides isolation
+    print "ℹ️  Skipping Postgres cleanup (using shared testuser cluster)\n";
     
     print "\n✅ Cleanup complete: $cleanup_count resources destroyed\n";
     return 1;
