@@ -70,9 +70,9 @@ subtest 'environment cleanup before test' => sub {
         }
     }
     
-    # Note: We use shared test Postgres cluster, don't clean it up per-user
+    # Note: We use production Postgres cluster, don't clean it up per-user
     # The per-user database within the cluster will be isolated
-    pass("Using shared test Postgres cluster (not cleaned up per-user)")
+    pass("Using production Postgres cluster (not cleaned up per-user)")
 };
 
 # Test 3: Development environment setup
@@ -155,14 +155,14 @@ subtest 'verify dev secrets configured' => sub {
 
 # Test 7: Verify managed postgres setup
 subtest 'verify managed postgres setup' => sub {
-    my $postgres_name = "magnet-postgres-testuser";
+    my $postgres_name = "magnet-postgres";
     my $database_name = "magnet_dev_$USERNAME";
     
-    # Check if shared postgres cluster exists
+    # Check if production postgres cluster exists
     my $postgres_list = `flyctl mpg list --org magnet-irc 2>&1`;
     if ($? == 0) {
         if ($postgres_list =~ /$postgres_name/) {
-            pass("Shared Postgres cluster $postgres_name is available");
+            pass("Production Postgres cluster $postgres_name is available");
             
             # Check if DATABASE_URL secret was set on atheme app
             my $atheme_app = "magnet-services-$USERNAME";
@@ -173,7 +173,7 @@ subtest 'verify managed postgres setup' => sub {
                 pass("DATABASE_URL check completed (may not be attached yet)");
             }
         } else {
-            pass("Shared Postgres cluster check completed (cluster may need to be created first)");
+            pass("Production Postgres cluster check completed (production may not be deployed yet)");
         }
     } else {
         pass("Postgres verification completed (unable to list clusters - permissions may be needed)");
@@ -351,14 +351,14 @@ subtest 'resource leak detection' => sub {
         pass("Volume leak check completed (unable to list all volumes)");
     }
     
-    # Check for postgres cleanup - we use shared testuser cluster, so it should still exist
-    my $postgres_name = "magnet-postgres-testuser";
+    # Check for postgres cleanup - we use production cluster, so it should still exist
+    my $postgres_name = "magnet-postgres";
     my $postgres_list = `flyctl mpg list --org magnet-irc 2>&1`;
     if ($? == 0) {
         if ($postgres_list =~ /$postgres_name/) {
-            pass("Shared testuser Postgres cluster $postgres_name still available (expected)");
+            pass("Production Postgres cluster $postgres_name still available (expected)");
         } else {
-            pass("Shared testuser Postgres cluster check completed (cluster may not exist yet)");
+            pass("Production Postgres cluster check completed (production may not be deployed yet)");
         }
     } else {
         pass("Postgres leak check completed (unable to list clusters)");

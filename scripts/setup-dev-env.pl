@@ -250,9 +250,9 @@ sub cleanup_dev_environment {
         }
     }
     
-    # Note: We use shared testuser Postgres cluster, don't destroy it during cleanup
+    # Note: We use production Postgres cluster, don't destroy it during cleanup
     # The per-user database within the cluster provides isolation
-    print "ℹ️  Skipping Postgres cleanup (using shared testuser cluster)\n";
+    print "ℹ️  Skipping Postgres cleanup (using production cluster)\n";
     
     print "\n✅ Cleanup complete: $cleanup_count resources destroyed\n";
     return 1;
@@ -261,42 +261,32 @@ sub cleanup_dev_environment {
 sub create_dev_postgres {
     my ($username) = @_;
     
-    # Use testuser-specific postgres cluster 
-    my $postgres_name = "magnet-postgres-testuser";
+    # Use production postgres cluster with test users
+    my $postgres_name = "magnet-postgres";
     
-    print "🐘 Setting up shared test Postgres for development...\n";
+    print "🐘 Using production Postgres cluster for development...\n";
     
-    # Check if shared test postgres exists
+    # Check if production postgres exists
     my $list_output = `flyctl mpg list --org magnet-irc 2>&1`;
     if ($list_output =~ /$postgres_name/) {
-        print "✅ Shared test Postgres cluster $postgres_name is available\n";
+        print "✅ Production Postgres cluster $postgres_name is available\n";
         return 1;
     }
     
-    print "📦 Creating shared test Postgres cluster (one-time setup)...\n";
-    print "ℹ️  This cluster will be shared across all test environments\n";
-    
-    my $cmd = "flyctl mpg create --name $postgres_name --region ord --org magnet-irc";
-    my $output = `$cmd 2>&1`;
-    
-    if ($? == 0) {
-        print "✅ Created shared test Postgres cluster $postgres_name\n";
-        return 1;
-    } else {
-        print "❌ Failed to create shared test Postgres cluster:\n$output\n";
-        print "ℹ️  Continuing without Postgres (apps will still be created)\n";
-        return 0;
-    }
+    print "❌ Production Postgres cluster $postgres_name not found\n";
+    print "ℹ️  Please ensure production infrastructure is deployed first\n";
+    print "ℹ️  Continuing without Postgres (apps will still be created)\n";
+    return 0;
 }
 
 sub attach_dev_postgres {
     my ($username) = @_;
     
-    my $postgres_name = "magnet-postgres-testuser";
+    my $postgres_name = "magnet-postgres";
     my $atheme_app = get_dev_app_name('magnet-services', $username);
     my $database_name = "magnet_dev_$username";
     
-    print "🔗 Attaching shared Postgres cluster with per-user database $database_name...\n";
+    print "🔗 Attaching production Postgres cluster with per-user database $database_name...\n";
     
     # Attach the shared cluster and create a per-user database
     my $cmd = "flyctl mpg attach $postgres_name --app $atheme_app --database-name $database_name 2>&1";
