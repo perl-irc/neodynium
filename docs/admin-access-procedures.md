@@ -29,18 +29,28 @@ The Magnet IRC Network uses Tailscale for secure administrative access to IRC se
    - ✅ **Pre-approved**: Skip manual device approval (optional)
    - ⏱️ **90-day expiration**: Set reasonable expiration time
 
-### Fly.io Secrets Configuration
-Set the Tailscale auth key as a secret for each application:
+### GitHub Repository Secrets Configuration
+Set both Fly.io API token and Tailscale auth key as GitHub repository secrets for CI/CD deployment:
 
 ```bash
-# Generate ephemeral auth key (reuse for all services)
+# Generate ephemeral Tailscale auth key
 EPHEMERAL_KEY="tskey-auth-xxxxxx-xxxx"
 
-# Set secrets for all apps
-fly secrets set TAILSCALE_AUTHKEY=$EPHEMERAL_KEY --app magnet-9rl
-fly secrets set TAILSCALE_AUTHKEY=$EPHEMERAL_KEY --app magnet-1eu  
-fly secrets set TAILSCALE_AUTHKEY=$EPHEMERAL_KEY --app magnet-atheme
+# Generate Fly.io deploy token  
+FLY_TOKEN="fo1_xxxxxxxxxxxxxxxxxxxxxx"
+
+# Add to GitHub repository secrets at:
+# https://github.com/your-org/your-repo/settings/secrets/actions
+# 
+# Required secrets:
+# Name: FLY_API_TOKEN
+# Value: fo1_xxxxxxxxxxxxxxxxxxxxxx
+#
+# Name: TAILSCALE_AUTHKEY  
+# Value: tskey-auth-xxxxxx-xxxx
 ```
+
+**Note**: The GitHub Actions workflow will automatically set these as Fly.io secrets during deployment.
 
 ## Administrative Access Methods
 
@@ -157,12 +167,18 @@ ssh root@magnet-9rl 'cat /proc/cpuinfo | grep flags'
 # Generate new ephemeral key
 NEW_KEY="tskey-auth-xxxxxx-yyyy"
 
-# Update secrets (containers will auto-reconnect on restart)
+# Update GitHub repository secret
+# Go to: https://github.com/your-org/your-repo/settings/secrets/actions
+# Update TAILSCALE_AUTHKEY with new value
+
+# Redeploy to apply new key (triggers via GitHub Actions)
+git commit --allow-empty -m "Rotate Tailscale auth key"
+git push
+
+# Or manually update Fly.io secrets if needed
 fly secrets set TAILSCALE_AUTHKEY=$NEW_KEY --app magnet-9rl
 fly secrets set TAILSCALE_AUTHKEY=$NEW_KEY --app magnet-1eu
 fly secrets set TAILSCALE_AUTHKEY=$NEW_KEY --app magnet-atheme
-
-# Restart containers to use new key
 fly machines restart --app magnet-9rl
 fly machines restart --app magnet-1eu  
 fly machines restart --app magnet-atheme
