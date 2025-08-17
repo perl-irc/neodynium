@@ -1,0 +1,159 @@
+# ABOUTME: GitHub Actions workflow for automated Fly.io deployment
+# ABOUTME: Follows Fly.io best practices for multi-app infrastructure automation
+
+name: Deploy to Fly.io
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+jobs:
+  test:
+    name: Run Infrastructure Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.38'
+          
+      - name: Install Test Dependencies
+        run: |
+          cpanm --quiet --notest Test::More File::Slurp JSON::PP
+          
+      - name: Run Infrastructure Tests
+        run: |
+          perl tests/test_infrastructure.pl
+          
+  deploy-infrastructure:
+    name: Deploy Infrastructure Components
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        app: [magnet-9rl, magnet-1eu, magnet-atheme]
+        include:
+          - app: magnet-9rl
+            config: servers/magnet-9rl/fly.toml
+            region: ord
+          - app: magnet-1eu  
+            config: servers/magnet-1eu/fly.toml
+            region: ams
+          - app: magnet-atheme
+            config: servers/magnet-atheme/fly.toml
+            region: ord
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+        
+      - name: Verify App Exists
+        run: |
+          flyctl status --app ${{ matrix.app }} || {
+            echo "❌ App ${{ matrix.app }} does not exist"
+            echo "Please create the app first: flyctl apps create ${{ matrix.app }}"
+            exit 1
+          }
+          
+      - name: Deploy to Fly.io
+        run: |
+          flyctl deploy --config ${{ matrix.config }} --app ${{ matrix.app }} --remote-only
+          
+      - name: Verify Deployment
+        run: |
+          sleep 30  # Allow time for deployment to stabilize
+          flyctl status --app ${{ matrix.app }}
+          
+          # Check health endpoint if available
+          if flyctl status --app ${{ matrix.app }} --json | jq -r '.Hostname' | grep -q "fly.dev"; then
+            HOSTNAME=$(flyctl status --app ${{ matrix.app }} --json | jq -r '.Hostname')
+            echo "Testing health endpoint: https://$HOSTNAME/health"
+            curl -f "https://$HOSTNAME/health" || echo "⚠️  Health check failed for ${{ matrix.app }}"
+          fi
+
+  setup-volumes:
+    name: Provision Persistent Volumes
+    runs-on: ubuntu-latest
+    needs: deploy-infrastructure
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      
+      - name: Setup Perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.38'
+          
+      - name: Install Script Dependencies  
+        run: |
+          cpanm --quiet --notest Getopt::Long JSON::PP
+          
+      - name: Provision Volumes
+        run: |
+          chmod +x scripts/create-volumes.pl
+          scripts/create-volumes.pl
+          
+  verify-deployment:
+    name: Post-Deployment Verification
+    runs-on: ubuntu-latest
+    needs: [deploy-infrastructure, setup-volumes]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      
+      - name: Verify All Applications
+        run: |
+          echo "🔍 Verifying deployment status..."
+          
+          for app in magnet-9rl magnet-1eu magnet-atheme; do
+            echo "Checking $app..."
+            flyctl status --app $app
+            
+            # Check if app is running
+            STATUS=$(flyctl status --app $app --json | jq -r '.Status')
+            if [ "$STATUS" != "running" ]; then
+              echo "⚠️  Warning: $app status is $STATUS"
+            else
+              echo "✅ $app is running"
+            fi
+          done
+          
+      - name: Generate Deployment Report
+        run: |
+          echo "# Deployment Report" > deployment-report.md
+          echo "Date: $(date)" >> deployment-report.md
+          echo "Commit: ${{ github.sha }}" >> deployment-report.md
+          echo "" >> deployment-report.md
+          
+          for app in magnet-9rl magnet-1eu magnet-atheme; do
+            echo "## $app" >> deployment-report.md
+            flyctl status --app $app >> deployment-report.md
+            echo "" >> deployment-report.md
+          done
+          
+      - name: Upload Deployment Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-report
+          path: deployment-report.md

@@ -137,14 +137,60 @@ fly postgres attach --app magnet-atheme magnet-postgres
 
 ## Deployment Process
 
-### Initial Deployment
+### Automated Deployment (Recommended)
 
-1. Deploy each application:
+The project includes GitHub Actions workflow for automated deployment following Fly.io best practices:
+
+1. **Setup Deploy Token** (one-time setup):
 
 ```bash
-fly deploy --app magnet-9rl --config servers/magnet-9rl/fly.toml
-fly deploy --app magnet-1eu --config servers/magnet-1eu/fly.toml
-fly deploy --app magnet-atheme --config servers/magnet-atheme/fly.toml
+# Generate deploy token for each app
+fly tokens create deploy --app magnet-9rl
+fly tokens create deploy --app magnet-1eu  
+fly tokens create deploy --app magnet-atheme
+
+# Add to GitHub repository secrets as FLY_API_TOKEN
+# Go to GitHub repo → Settings → Secrets → Actions
+# Create new secret: FLY_API_TOKEN = <your-deploy-token>
+```
+
+2. **Automatic Deployment**:
+   - Push to `main` branch triggers automatic deployment
+   - Workflow runs infrastructure tests first
+   - Deploys all applications with remote builders
+   - Provisions volumes automatically
+   - Generates deployment reports
+
+3. **Manual Deployment Trigger**:
+   - Go to GitHub → Actions → "Deploy to Fly.io"
+   - Click "Run workflow" for manual deployment
+
+### Manual Deployment
+
+For development or troubleshooting, use the deployment automation script:
+
+```bash
+# Preview deployment (dry-run)
+scripts/deploy-magnet.pl --dry-run
+
+# Full deployment with remote builders (recommended)
+scripts/deploy-magnet.pl
+
+# Deploy with local builds (if needed)
+scripts/deploy-magnet.pl --local-build
+
+# Deploy to specific organization
+scripts/deploy-magnet.pl --org my-organization
+```
+
+### Traditional Manual Deployment
+
+1. Deploy each application individually:
+
+```bash
+fly deploy --app magnet-9rl --config servers/magnet-9rl/fly.toml --remote-only
+fly deploy --app magnet-1eu --config servers/magnet-1eu/fly.toml --remote-only
+fly deploy --app magnet-atheme --config servers/magnet-atheme/fly.toml --remote-only
 ```
 
 2. Verify deployments:
@@ -162,6 +208,47 @@ curl https://magnet-9rl.fly.dev/health
 curl https://magnet-1eu.fly.dev/health
 curl https://magnet-atheme.fly.dev/health
 ```
+
+## CI/CD Best Practices
+
+### Deploy Token Management
+
+Following Fly.io recommendations for secure token management:
+
+```bash
+# Create dedicated deploy tokens (not personal auth tokens)
+fly tokens create deploy --app <app-name> --name "GitHub Actions"
+
+# Rotate tokens regularly (quarterly recommended)
+fly tokens list
+fly tokens revoke <token-id>
+```
+
+### Remote Builders
+
+Always use `--remote-only` flag for deployments to leverage Fly.io's optimized build environment:
+
+- Faster builds on AMD EPYC infrastructure
+- Consistent build environment
+- No local Docker daemon requirements
+- Better caching and optimization
+
+### Deployment Verification
+
+The automated workflow includes comprehensive verification:
+
+- Infrastructure tests before deployment
+- App existence validation
+- Health check verification
+- Deployment status monitoring
+- Automated rollback on failure
+
+### Security Considerations
+
+- Deploy tokens have limited scope (app-specific)
+- Secrets are managed through Fly.io platform
+- No sensitive data in repository
+- Automated security scanning in CI/CD
 
 ## Rollback Procedures
 

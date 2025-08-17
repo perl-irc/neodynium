@@ -151,7 +151,7 @@ subtest 'deployment documentation' => sub {
     my $doc_path = 'docs/deployment-prerequisites.md';
     ok(-f $doc_path, 'deployment-prerequisites.md exists');
     SKIP: {
-        skip "deployment-prerequisites.md not found", 3 unless -f $doc_path;
+        skip "deployment-prerequisites.md not found", 6 unless -f $doc_path;
         
         open my $fh, '<', $doc_path or die "Can't open $doc_path: $!";
         my $content = do { local $/; <$fh> };
@@ -160,6 +160,9 @@ subtest 'deployment documentation' => sub {
         like($content, qr/Fly\.io CLI/i, 'Documents Fly.io CLI requirements');
         like($content, qr/Authentication/i, 'Documents authentication setup');
         like($content, qr/Rollback/i, 'Documents rollback procedures');
+        like($content, qr/GitHub Actions/i, 'Documents CI/CD with GitHub Actions');
+        like($content, qr/deploy.*token/i, 'Documents deploy token management');
+        like($content, qr/remote.*only/i, 'Documents remote builders best practice');
     }
 };
 
@@ -198,6 +201,74 @@ subtest 'volume attachments' => sub {
                 fail("Volumes not yet created for $app");
             }
         }
+    }
+};
+
+# Test 11: GitHub Actions workflow exists and is valid
+subtest 'github actions workflow' => sub {
+    my $workflow_path = '.github/workflows/fly.yml';
+    ok(-f $workflow_path, 'GitHub Actions workflow exists');
+    SKIP: {
+        skip "workflow file not found", 5 unless -f $workflow_path;
+        
+        open my $fh, '<', $workflow_path or die "Can't open $workflow_path: $!";
+        my $content = do { local $/; <$fh> };
+        close $fh;
+        
+        like($content, qr/name:\s*Deploy to Fly\.io/i, 'Workflow has correct name');
+        like($content, qr/on:\s*\n\s*push:/m, 'Workflow triggers on push');
+        like($content, qr/FLY_API_TOKEN/i, 'Workflow uses deploy token');
+        like($content, qr/--remote-only/i, 'Workflow uses remote builders');
+        like($content, qr/test.*infrastructure/i, 'Workflow runs infrastructure tests');
+    }
+};
+
+# Test 12: Deployment automation scripts exist and are executable
+subtest 'deployment automation scripts' => sub {
+    my @scripts = (
+        'scripts/deploy-magnet.pl',
+        'scripts/setup-deploy-tokens.pl'
+    );
+    
+    foreach my $script (@scripts) {
+        ok(-f $script, "$script exists");
+        SKIP: {
+            skip "$script not found", 1 unless -f $script;
+            ok(-x $script, "$script is executable");
+        }
+    }
+};
+
+# Test 13: Deployment script configuration
+subtest 'deployment script configuration' => sub {
+    my $script_path = 'scripts/deploy-magnet.pl';
+    SKIP: {
+        skip "deploy-magnet.pl not found", 4 unless -f $script_path;
+        
+        open my $fh, '<', $script_path or die "Can't open $script_path: $!";
+        my $content = do { local $/; <$fh> };
+        close $fh;
+        
+        like($content, qr/magnet-9rl.*magnet-1eu.*magnet-atheme/s, 'Includes all three applications');
+        like($content, qr/health.*check/i, 'Implements health checking');
+        like($content, qr/verify.*secrets/i, 'Includes secrets verification');
+        like($content, qr/remote.*only/i, 'Uses remote builders by default');
+    }
+};
+
+# Test 14: Token management script functionality
+subtest 'token management script' => sub {
+    my $script_path = 'scripts/setup-deploy-tokens.pl';
+    SKIP: {
+        skip "setup-deploy-tokens.pl not found", 3 unless -f $script_path;
+        
+        open my $fh, '<', $script_path or die "Can't open $script_path: $!";
+        my $content = do { local $/; <$fh> };
+        close $fh;
+        
+        like($content, qr/tokens.*create.*deploy/i, 'Creates deploy tokens');
+        like($content, qr/GitHub.*Actions/i, 'Includes GitHub Actions setup');
+        like($content, qr/revoke.*tokens/i, 'Supports token revocation');
     }
 };
 
