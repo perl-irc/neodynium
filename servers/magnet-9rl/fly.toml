@@ -1,0 +1,55 @@
+# ABOUTME: Fly.io configuration for magnet-9rl (US Hub IRC server)
+# ABOUTME: Primary IRC server deployed in Chicago region with OpenSSL optimization
+
+app = "magnet-9rl"
+primary_region = "ord"
+
+[vm]
+  memory = "1gb"
+  cpus = 1
+
+# [build]
+#   dockerfile = "Dockerfile.solanum"  # Will be added in GitHub Issue #2
+
+[mounts]
+  source = "magnet_9rl_data"
+  destination = "/opt/solanum/var"
+
+[env]
+  SERVER_NAME = "magnet-9rl"
+  SERVER_SID = "9RL"
+  SERVER_DESCRIPTION = "Magnet IRC Network - US Hub"
+
+[http_service]
+  internal_port = 8080
+  force_https = false
+  auto_stop_machines = true
+  auto_start_machines = true
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[services]]
+  internal_port = 6667
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 6667
+
+[[services]]
+  internal_port = 6697
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 6697
+
+[[services]]
+  internal_port = 7000
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 7000
