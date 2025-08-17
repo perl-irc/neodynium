@@ -34,7 +34,7 @@ my %EXPECTED_APPS = (
 # Test 1: Verify fly.toml files exist
 subtest 'fly.toml files exist' => sub {
     foreach my $app (keys %EXPECTED_APPS) {
-        my $fly_toml_path = "apps/$app/fly.toml";
+        my $fly_toml_path = "servers/$app/fly.toml";
         ok(-f $fly_toml_path, "fly.toml exists for $app");
     }
 };
@@ -42,7 +42,7 @@ subtest 'fly.toml files exist' => sub {
 # Test 2: Validate fly.toml configuration structure
 subtest 'fly.toml configuration validity' => sub {
     foreach my $app (keys %EXPECTED_APPS) {
-        my $fly_toml_path = "apps/$app/fly.toml";
+        my $fly_toml_path = "servers/$app/fly.toml";
         SKIP: {
             skip "fly.toml not found for $app", 4 unless -f $fly_toml_path;
             
@@ -63,7 +63,7 @@ subtest 'fly.toml configuration validity' => sub {
 # Test 3: Validate resource allocation
 subtest 'resource allocation' => sub {
     foreach my $app (keys %EXPECTED_APPS) {
-        my $fly_toml_path = "apps/$app/fly.toml";
+        my $fly_toml_path = "servers/$app/fly.toml";
         SKIP: {
             skip "fly.toml not found for $app", 2 unless -f $fly_toml_path;
             
@@ -82,7 +82,7 @@ subtest 'resource allocation' => sub {
 # Test 4: Validate volume configuration
 subtest 'volume configuration' => sub {
     foreach my $app (keys %EXPECTED_APPS) {
-        my $fly_toml_path = "apps/$app/fly.toml";
+        my $fly_toml_path = "servers/$app/fly.toml";
         SKIP: {
             skip "fly.toml not found for $app", 2 unless -f $fly_toml_path;
             
@@ -99,7 +99,7 @@ subtest 'volume configuration' => sub {
 # Test 5: Validate health check configuration
 subtest 'health check endpoints' => sub {
     foreach my $app (keys %EXPECTED_APPS) {
-        my $fly_toml_path = "apps/$app/fly.toml";
+        my $fly_toml_path = "servers/$app/fly.toml";
         SKIP: {
             skip "fly.toml not found for $app", 3 unless -f $fly_toml_path;
             
@@ -118,7 +118,7 @@ subtest 'health check endpoints' => sub {
 # Test 6: Validate service ports
 subtest 'service ports configuration' => sub {
     foreach my $app (keys %EXPECTED_APPS) {
-        my $fly_toml_path = "apps/$app/fly.toml";
+        my $fly_toml_path = "servers/$app/fly.toml";
         SKIP: {
             skip "fly.toml not found for $app", 1 unless -f $fly_toml_path;
             

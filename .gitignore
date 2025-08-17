@@ -1,3 +1,18 @@
-CLAUDE.md
-.claude
-github-issues.md
+# PVX local modules
+local/
+
+# Temporary files
+*.tmp
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*~
+.*.swp
+.*.swo
+
+# Log files
+*.log

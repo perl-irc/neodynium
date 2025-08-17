@@ -142,9 +142,9 @@ fly postgres attach --app magnet-atheme magnet-postgres
 1. Deploy each application:
 
 ```bash
-fly deploy --app magnet-9rl --config apps/magnet-9rl/fly.toml
-fly deploy --app magnet-1eu --config apps/magnet-1eu/fly.toml
-fly deploy --app magnet-atheme --config apps/magnet-atheme/fly.toml
+fly deploy --app magnet-9rl --config servers/magnet-9rl/fly.toml
+fly deploy --app magnet-1eu --config servers/magnet-1eu/fly.toml
+fly deploy --app magnet-atheme --config servers/magnet-atheme/fly.toml
 ```
 
 2. Verify deployments:
