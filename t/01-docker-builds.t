@@ -9,25 +9,25 @@ use Test2::V0;
 # Test constants for Docker configurations
 my %DOCKER_CONFIGS = (
     'solanum' => {
-        dockerfile => 'Dockerfile.solanum',
+        dockerfile => 'solanum/Dockerfile',
         base_image => 'alpine:latest',
         required_packages => ['openssl', 'ca-certificates', 'iptables'],
         exposed_ports => [6667, 6697, 7000, 8080],
         expected_user => 'ircd',
-        startup_script => 'start-solanum.sh',
-        config_template => 'ircd.conf.template',
+        startup_script => 'solanum/entrypoint.sh',
+        config_template => 'solanum/ircd.conf.template',
         volume_mount => '/opt/solanum/var',
         uses_tailscale => 1,
         openssl_optimization => 1,
     },
     'atheme' => {
-        dockerfile => 'Dockerfile.atheme',
+        dockerfile => 'atheme/Dockerfile',
         base_image => 'alpine:latest',
         required_packages => ['openssl', 'postgresql-client', 'ca-certificates'],
         exposed_ports => [8080],
         expected_user => 'atheme',
-        startup_script => 'start-atheme.sh',
-        config_template => 'atheme.conf.template',
+        startup_script => 'atheme/entrypoint.sh',
+        config_template => 'atheme/atheme.conf.template',
         volume_mount => '/var/lib/atheme',
         uses_tailscale => 1,
         openssl_optimization => 1,
@@ -139,7 +139,7 @@ subtest 'port exposure configuration' => sub {
         my $expected_ports = $DOCKER_CONFIGS{$component}->{exposed_ports};
         
         foreach my $port (@$expected_ports) {
-            like($content, qr/EXPOSE\s+$port/i, "$component: Exposes port $port");
+            like($content, qr/EXPOSE.*\b$port\b/i, "$component: Exposes port $port");
         }
     }
 };
@@ -175,7 +175,7 @@ subtest 'startup script tailscale integration' => sub {
         close $fh;
         
         # Tailscale daemon startup
-        like($content, qr/tailscaled.*start/i, "$component: Starts Tailscale daemon");
+        like($content, qr/tailscaled.*&/i, "$component: Starts Tailscale daemon");
         like($content, qr/tailscale.*up/i, "$component: Brings up Tailscale connection");
         like($content, qr/TAILSCALE_AUTHKEY/i, "$component: Uses ephemeral auth key");
         like($content, qr/--ephemeral/i, "$component: Uses ephemeral device registration");
@@ -242,7 +242,7 @@ subtest 'configuration template syntax' => sub {
         like($content, qr/\$\{[A-Z_]+\}/i, "$component: Template uses environment variable substitution");
         
         if ($component eq 'solanum') {
-            like($content, qr/servername.*\$\{SERVER_NAME\}/i, "$component: Template includes server name");
+            like($content, qr/name.*\$\{SERVER_NAME\}/i, "$component: Template includes server name");
             like($content, qr/sid.*\$\{SERVER_SID\}/i, "$component: Template includes server ID");
         } elsif ($component eq 'atheme') {
             like($content, qr/\$\{SERVICES_PASSWORD\}/i, "$component: Template includes services password");

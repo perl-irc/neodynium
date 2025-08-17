@@ -65,10 +65,14 @@ RUN chown -R atheme:atheme /opt/atheme
 
 # Copy configuration templates and startup script
 COPY atheme.conf.template /opt/atheme/etc/atheme.conf.template
-COPY start-atheme.sh /app/start.sh
+COPY entrypoint.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
+# Container starts as root for Tailscale, drops to atheme user for services
 WORKDIR /opt/atheme
+
+# Security: Atheme service runs as atheme user via su-exec
+USER atheme
 
 EXPOSE 8080
 

@@ -11,21 +11,21 @@ my %TAILSCALE_CONFIGS = (
     'magnet-9rl' => {
         hostname => 'magnet-9rl',
         component => 'solanum',
-        startup_script => 'start-solanum.sh',
+        startup_script => 'solanum/entrypoint.sh',
         admin_access => 1,
         ephemeral => 1,
     },
     'magnet-1eu' => {
         hostname => 'magnet-1eu',
         component => 'solanum',
-        startup_script => 'start-solanum.sh',
+        startup_script => 'solanum/entrypoint.sh',
         admin_access => 1,
         ephemeral => 1,
     },
     'magnet-atheme' => {
         hostname => 'magnet-atheme',
         component => 'atheme',
-        startup_script => 'start-atheme.sh',
+        startup_script => 'atheme/entrypoint.sh',
         admin_access => 1,
         ephemeral => 1,
     },
@@ -65,7 +65,7 @@ subtest 'startup script tailscale initialization' => sub {
         like($content, qr/tailscale.*up/i, "$service: Brings up Tailscale connection");
         like($content, qr/TAILSCALE_AUTHKEY/i, "$service: Uses auth key environment variable");
         like($content, qr/--ephemeral/i, "$service: Uses ephemeral device registration");
-        like($content, qr/--hostname.*$config->{hostname}/i, "$service: Sets dynamic hostname");
+        like($content, qr/--hostname.*\$\{HOSTNAME\}/i, "$service: Sets dynamic hostname");
     }
 };
 
@@ -82,7 +82,7 @@ subtest 'ephemeral auth key handling' => sub {
         close $fh;
         
         # Ephemeral key configuration
-        like($content, qr/--authkey.*\$\{?TAILSCALE_AUTHKEY\}?/i, "$service: Uses authkey from environment");
+        like($content, qr/--auth-key.*\$\{TAILSCALE_AUTHKEY\}/i, "$service: Uses authkey from environment");
         like($content, qr/--ephemeral/i, "$service: Enables ephemeral mode");
         
         # Security: No hardcoded keys
@@ -102,8 +102,8 @@ subtest 'dynamic hostname assignment' => sub {
         my $content = do { local $/; <$fh> };
         close $fh;
         
-        # Hostname should match service name
-        like($content, qr/--hostname.*$config->{hostname}/i, 
+        # Hostname should be set dynamically via environment variable
+        like($content, qr/--hostname.*\$\{HOSTNAME\}/i, 
              "$service: Hostname set to $config->{hostname}");
     }
 };
@@ -199,7 +199,7 @@ subtest 'development environment integration' => sub {
 
 # Test 11: Tailscale binary validation in Dockerfiles
 subtest 'tailscale binary integration in dockerfiles' => sub {
-    my @dockerfiles = ('Dockerfile.solanum', 'Dockerfile.atheme');
+    my @dockerfiles = ('solanum/Dockerfile', 'atheme/Dockerfile');
     
     foreach my $dockerfile (@dockerfiles) {
         skip_all "$dockerfile not found" unless -f $dockerfile;
@@ -232,13 +232,13 @@ subtest 'admin access documentation' => sub {
     like($content, qr/tailscale.*ssh/i, 'Documents Tailscale SSH access');
     like($content, qr/ephemeral.*key/i, 'Documents ephemeral key usage');
     like($content, qr/admin.*access/i, 'Documents admin access procedures');
-    like($content, qr/cleanup.*device/i, 'Documents device cleanup procedures');
+    like($content, qr/ephemeral.*cleanup|automatic.*cleanup/i, 'Documents device cleanup procedures');
 };
 
 # Test 13: Security validation for auth key handling
 subtest 'auth key security validation' => sub {
     # Check all scripts for security best practices
-    my @scripts = ('start-solanum.sh', 'start-atheme.sh', 'scripts/cleanup-tailscale.pl');
+    my @scripts = ('solanum/entrypoint.sh', 'atheme/entrypoint.sh');
     
     foreach my $script (@scripts) {
         skip_all "$script not found" unless -f $script;

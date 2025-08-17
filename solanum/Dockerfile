@@ -65,10 +65,14 @@ RUN chown -R ircd:ircd /opt/solanum/var
 
 # Copy configuration templates and startup script
 COPY ircd.conf.template /opt/solanum/etc/ircd.conf.template
-COPY start-solanum.sh /app/start.sh
+COPY entrypoint.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
+# Container starts as root for Tailscale, drops to ircd user for Solanum
 WORKDIR /opt/solanum
+
+# Security: Solanum service runs as ircd user via su-exec
+USER ircd
 
 EXPOSE 6667 6697 7000 8080
 
