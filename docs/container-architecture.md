@@ -8,13 +8,13 @@ The Magnet IRC Network consists of two primary container types, each optimized f
 
 ### Container Types
 
-1. **Solanum IRCd Container** (`Dockerfile.solanum`)
+1. **Solanum IRCd Container** (`solanum/Dockerfile`)
    - **Purpose**: IRC server daemon for client connections and server linking
-   - **Applications**: magnet-9rl (US Hub), magnet-1eu (EU Server)
+   - **Applications**: magnet-9rl (US Hub), magnet-1eu (EU Leaf Server)
    - **Base**: Alpine Linux with OpenSSL optimization
 
-2. **Atheme Services Container** (`Dockerfile.atheme`)
-   - **Purpose**: IRC services (NickServ, ChanServ, etc.) with database backend
+2. **Atheme Services Container** (`atheme/Dockerfile`)
+   - **Purpose**: IRC services (NickServ, ChanServ, etc.) with external database backend
    - **Application**: magnet-atheme (US Services)
    - **Base**: Alpine Linux with PostgreSQL client support
 
@@ -146,7 +146,6 @@ Both containers use configuration templates with environment variable substituti
 
 #### Atheme Template Variables
 - `${ATHEME_NETWORK}`: Network name (Magnet)
-- `${ATHEME_NETWORK_DOMAIN}`: Domain suffix (kowloon.social)
 - `${SERVICES_PASSWORD}`: Authentication to IRC servers
 - `${OPERATOR_PASSWORD}`: Services operator authentication
 - `${ATHEME_POSTGRES_HOST}`: Database host (magnet-postgres.internal)
@@ -179,15 +178,30 @@ OPER_PASS=${OPER_PASSWORD:-$(pwgen -s 24 1)}
 
 ### Container Sizing Strategy
 
-#### Solanum IRCd Containers
-- **Memory**: 1GB (sufficient for thousands of concurrent connections)
-- **CPU**: 1-2 vCPUs (single-threaded with occasional spikes)
-- **Use Case**: Client connections and occasional server linking
+#### Hub Server (magnet-9rl)
+- **Memory**: 1GB (handles server linking, services connection, and client connections)
+- **CPU**: 1 vCPU (single-threaded IRC daemon with coordination overhead)
+- **Use Case**: Primary hub for server linking, services coordination, and client connections
 
-#### Atheme Services Container
-- **Memory**: 2GB (database operations and service state)
-- **CPU**: 2 vCPUs (database queries and multi-service operations)
-- **Use Case**: Services registration, channel management, authentication
+#### Leaf Server (magnet-1eu)  
+- **Memory**: 512MB (minimal overhead for client connections only)
+- **CPU**: 1 vCPU (single-threaded IRC daemon, no linking responsibilities)
+- **Use Case**: Regional client connections, links to hub server only
+
+#### Atheme Services Container (magnet-atheme)
+- **Memory**: 512MB (lightweight services with external PostgreSQL database)
+- **CPU**: 1 vCPU (service processes with PostgreSQL client connections)
+- **Use Case**: IRC services (NickServ, ChanServ, etc.) connecting to external database
+
+#### Resource Optimization Rationale
+The allocation strategy reflects each component's actual workload requirements:
+
+- **Hub Server (1GB)**: Needs additional memory for server linking coordination, services connection management, and potentially higher client loads as the primary entry point
+- **Leaf Server (512MB)**: Minimal allocation since it only handles client connections and links to the hub - no services coordination or server linking responsibilities  
+- **Services (512MB)**: Lightweight allocation since Atheme services are relatively simple processes that connect to an external PostgreSQL database rather than running a local database
+- **Database (External)**: The PostgreSQL database runs as a separate Fly.io managed service, removing database overhead from the IRC components
+
+This results in a total of 2GB RAM across all IRC components (1GB + 512MB + 512MB) versus the previous 5GB allocation, providing significant cost savings while maintaining appropriate performance for each component's role.
 
 ## Security Architecture
 
