@@ -64,8 +64,8 @@ RUN adduser -D -s /bin/false atheme
 RUN chown -R atheme:atheme /opt/atheme
 
 # Copy configuration templates and startup script
-COPY atheme.conf.template /opt/atheme/etc/atheme.conf.template
-COPY entrypoint.sh /app/start.sh
+COPY atheme/atheme.conf.template /opt/atheme/etc/atheme.conf.template
+COPY atheme/entrypoint.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
 # Container starts as root for Tailscale, drops to atheme user for services

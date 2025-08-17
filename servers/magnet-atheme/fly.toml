@@ -9,7 +9,8 @@ primary_region = "ord"
   cpus = 1
 
 [build]
-  dockerfile = "../../atheme/Dockerfile"
+  dockerfile = "atheme/Dockerfile"
+  buildfolder = "../.."
 
 [mounts]
   source = "magnet_atheme_data"

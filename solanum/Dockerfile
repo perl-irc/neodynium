@@ -64,8 +64,8 @@ RUN adduser -D -s /bin/false ircd
 RUN chown -R ircd:ircd /opt/solanum/var
 
 # Copy configuration templates and startup script
-COPY ircd.conf.template /opt/solanum/etc/ircd.conf.template
-COPY entrypoint.sh /app/start.sh
+COPY solanum/ircd.conf.template /opt/solanum/etc/ircd.conf.template
+COPY solanum/entrypoint.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
 # Container starts as root for Tailscale, drops to ircd user for Solanum
