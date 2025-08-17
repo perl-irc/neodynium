@@ -5,7 +5,7 @@
 /* Optimized for AMD EPYC with OpenSSL acceleration */
 
 serverinfo {
-    name = "${SERVER_NAME}.kowloon.social";
+    name = "${SERVER_NAME}.raptor-betelgeuse.ts.net";
     sid = "${SERVER_SID}";
     description = "${SERVER_DESCRIPTION}";
     network_name = "Magnet";
@@ -17,7 +17,7 @@ serverinfo {
 admin {
     name = "Network Administrator";
     description = "Magnet IRC Network";
-    email = "admin@kowloon.social";
+    email = "admin@raptor-betelgeuse.ts.net";
 };
 
 /* Connection classes optimized for AMD EPYC performance */
@@ -61,7 +61,7 @@ operator "admin" {
 };
 
 /* Server linking via Tailscale (only for hub - 9RL) */
-connect "magnet-1EU.kowloon.social" {
+connect "magnet-1EU.raptor-betelgeuse.ts.net" {
     host = "magnet-1eu";  /* Tailscale hostname */
     send_password = "${LINK_PASSWORD_9RL_1EU}";
     accept_password = "${LINK_PASSWORD_9RL_1EU}";
@@ -72,8 +72,8 @@ connect "magnet-1EU.kowloon.social" {
 };
 
 /* Services linking via Tailscale (only for hub - 9RL) */
-service { name = "services.kowloon.social"; };
-connect "services.kowloon.social" {
+service { name = "services.raptor-betelgeuse.ts.net"; };
+connect "services.raptor-betelgeuse.ts.net" {
     host = "magnet-atheme";  /* Tailscale hostname */
     send_password = "${SERVICES_PASSWORD}";
     accept_password = "${SERVICES_PASSWORD}";

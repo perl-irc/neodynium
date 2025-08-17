@@ -18,16 +18,16 @@ database {
 loadmodule "modules/backend/opensex";
 
 serverinfo {
-    name = "services.${ATHEME_NETWORK_DOMAIN}";
+    name = "services.raptor-betelgeuse.ts.net";
     desc = "${ATHEME_NETWORK} IRC Services";
     numeric = "00A";
     vhost = "0.0.0.0";
     recontime = 10;
     restartonfailure = no;
     netname = "${ATHEME_NETWORK}";
-    hidehostsuffix = "users.${ATHEME_NETWORK_DOMAIN}";
+    hidehostsuffix = "users.raptor-betelgeuse.ts.net";
     adminname = "Network Administrator";
-    adminemail = "admin@${ATHEME_NETWORK_DOMAIN}";
+    adminemail = "admin@raptor-betelgeuse.ts.net";
     mta = "/usr/sbin/sendmail";
     loglevel = { error; info; verbose; };
     maxlogins = 5;
@@ -39,7 +39,7 @@ serverinfo {
 };
 
 /* Uplink configuration via Tailscale */
-uplink "${ATHEME_HUB_SERVER}.${ATHEME_NETWORK_DOMAIN}" {
+uplink "${ATHEME_HUB_SERVER}.raptor-betelgeuse.ts.net" {
     host = "${ATHEME_HUB_HOSTNAME}";  /* Tailscale hostname */
     send_password = "${SERVICES_PASSWORD}";
     receive_password = "${SERVICES_PASSWORD}";
@@ -63,7 +63,7 @@ loadmodule "modules/memoserv/main";
 nickserv {
     nick = "NickServ";
     user = "services";
-    host = "services.${ATHEME_NETWORK_DOMAIN}";
+    host = "services.raptor-betelgeuse.ts.net";
     real = "Nickname Services";
     aliases = { "NS" };
 };
@@ -72,7 +72,7 @@ nickserv {
 chanserv {
     nick = "ChanServ";
     user = "services";
-    host = "services.${ATHEME_NETWORK_DOMAIN}";
+    host = "services.raptor-betelgeuse.ts.net";
     real = "Channel Services";
     aliases = { "CS" };
 };
@@ -81,7 +81,7 @@ chanserv {
 operserv {
     nick = "OperServ";
     user = "services";
-    host = "services.${ATHEME_NETWORK_DOMAIN}";
+    host = "services.raptor-betelgeuse.ts.net";
     real = "Operator Services";
     aliases = { "OS" };
 };
@@ -90,7 +90,7 @@ operserv {
 memoserv {
     nick = "MemoServ";
     user = "services";
-    host = "services.${ATHEME_NETWORK_DOMAIN}";
+    host = "services.raptor-betelgeuse.ts.net";
     real = "Memo Services";
     aliases = { "MS" };
 };
