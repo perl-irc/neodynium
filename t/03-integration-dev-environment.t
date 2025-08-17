@@ -72,7 +72,7 @@ subtest 'environment cleanup before test' => sub {
     
     # Clean up any existing Managed Postgres
     my $postgres_name = "magnet-postgres-$USERNAME";
-    my $postgres_list = `flyctl mpg list --org personal 2>&1`;
+    my $postgres_list = `flyctl mpg list --org magnet-irc 2>&1`;
     if ($? == 0 && $postgres_list =~ /$postgres_name/) {
         note("Found existing Managed Postgres $postgres_name, cleaning up...");
         my $destroy_output = `flyctl mpg destroy $postgres_name --force 2>&1`;
@@ -169,7 +169,7 @@ subtest 'verify managed postgres setup' => sub {
     my $postgres_name = "magnet-postgres-$USERNAME";
     
     # Check if postgres cluster was created
-    my $postgres_list = `flyctl mpg list --org personal 2>&1`;
+    my $postgres_list = `flyctl mpg list --org magnet-irc 2>&1`;
     if ($? == 0) {
         if ($postgres_list =~ /$postgres_name/) {
             pass("Managed Postgres cluster $postgres_name was created");
@@ -363,7 +363,7 @@ subtest 'resource leak detection' => sub {
     
     # Check for postgres cleanup
     my $postgres_name = "magnet-postgres-$USERNAME";
-    my $postgres_list = `flyctl mpg list --org personal 2>&1`;
+    my $postgres_list = `flyctl mpg list --org magnet-irc 2>&1`;
     if ($? == 0) {
         if ($postgres_list !~ /$postgres_name/) {
             pass("Managed Postgres $postgres_name successfully removed");

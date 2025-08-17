@@ -74,7 +74,7 @@ sub create_dev_app {
     
     print "🏗️  Creating dev app $app_name...\n";
     
-    my $create_cmd = "flyctl apps create $app_name --org personal";
+    my $create_cmd = "flyctl apps create $app_name --org magnet-irc";
     my $output = `$create_cmd 2>&1`;
     
     if ($? == 0) {
@@ -252,7 +252,7 @@ sub cleanup_dev_environment {
     
     # Clean up Managed Postgres
     my $postgres_name = "magnet-postgres-$username";
-    my $list_output = `flyctl mpg list --org personal 2>&1`;
+    my $list_output = `flyctl mpg list --org magnet-irc 2>&1`;
     if ($list_output =~ /$postgres_name/) {
         print "Destroying Managed Postgres $postgres_name...\n";
         my $cmd = "flyctl mpg destroy $postgres_name --force";
@@ -277,7 +277,7 @@ sub create_dev_postgres {
     print "🐘 Setting up Managed Postgres for development...\n";
     
     # Check if managed postgres already exists
-    my $list_output = `flyctl mpg list --org personal 2>&1`;
+    my $list_output = `flyctl mpg list --org magnet-irc 2>&1`;
     if ($list_output =~ /$postgres_name/) {
         print "✅ Managed Postgres $postgres_name already exists\n";
         return 1;
@@ -285,7 +285,7 @@ sub create_dev_postgres {
     
     print "📦 Creating Managed Postgres cluster $postgres_name...\n";
     
-    my $cmd = "flyctl mpg create --name $postgres_name --region ord --org personal";
+    my $cmd = "flyctl mpg create --name $postgres_name --region ord --org magnet-irc";
     my $output = `$cmd 2>&1`;
     
     if ($? == 0) {
@@ -379,7 +379,8 @@ EOF
     }
     
     if ($cleanup) {
-        exit cleanup_dev_environment($username, $confirm) ? 0 : 1;
+        my $result = cleanup_dev_environment($username, $confirm);
+        exit($result ? 0 : 1);
     }
     
     # Default: Set up dev environment
