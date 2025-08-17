@@ -12,7 +12,7 @@ sleep 5
 
 # Connect to Tailscale network
 HOSTNAME=${SERVER_NAME:-atheme-${FLY_REGION:-unknown}}
-/usr/local/bin/tailscale up --auth-key=${TAILSCALE_AUTHKEY} --hostname=${HOSTNAME} --ephemeral --ssh --accept-routes=false --accept-dns=false
+/usr/local/bin/tailscale up --auth-key=${TAILSCALE_AUTHKEY} --hostname=${HOSTNAME} --ephemeral --ssh --accept-routes=false --accept-dns=true
 
 echo "Connected to Tailscale as ${HOSTNAME}"
 
