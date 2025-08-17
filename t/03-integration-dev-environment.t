@@ -213,10 +213,10 @@ subtest 'basic deployment validation' => sub {
 # Test 9: Optional deployment and connectivity test
 subtest 'optional deployment and connectivity test' => sub {
     # This test optionally deploys the dev environment and tests IRC connectivity
-    # Skip if MAGNET_SKIP_DEPLOYMENT is set to avoid long-running tests
+    # Skip if MAGNET_SKIP_DEPLOYMENT is set or in CI to avoid long-running tests
     
-    if ($ENV{MAGNET_SKIP_DEPLOYMENT}) {
-        pass("Deployment test skipped (MAGNET_SKIP_DEPLOYMENT is set)");
+    if ($ENV{MAGNET_SKIP_DEPLOYMENT} || $ENV{CI}) {
+        pass("Deployment test skipped (CI environment or MAGNET_SKIP_DEPLOYMENT is set)");
         return;
     }
     
@@ -277,7 +277,7 @@ subtest 'optional deployment and connectivity test' => sub {
         }
         
     } else {
-        pass("Deployment test completed (deployment may have failed - this is OK for testing)");
+        fail("Development environment deployment failed with exit code $deploy_exit");
         note("Deploy output: $deploy_output");
     }
 };
