@@ -30,27 +30,17 @@ Administrative access to the Magnet IRC Network is granted through membership in
 3. Admin access is managed through GitHub Teams and repository permissions
 
 ### Infrastructure Secrets Configuration (Maintainers Only)
-Set both Fly.io API token and Tailscale auth key as GitHub repository secrets for CI/CD deployment:
+The following GitHub repository secrets are already configured for CI/CD deployment:
 
 ```bash
-# Generate ephemeral Tailscale auth key
-EPHEMERAL_KEY="tskey-auth-xxxxxx-xxxx"
-
-# Generate Fly.io deploy token  
-FLY_TOKEN="fo1_xxxxxxxxxxxxxxxxxxxxxx"
-
-# Add to GitHub repository secrets at:
+# Configured GitHub repository secrets:
 # https://github.com/perl-irc/neodynium/settings/secrets/actions
 # 
-# Required secrets:
-# Name: FLY_API_TOKEN
-# Value: fo1_xxxxxxxxxxxxxxxxxxxxxx
-#
-# Name: TAILSCALE_AUTHKEY  
-# Value: tskey-auth-xxxxxx-xxxx
+# FLY_API_TOKEN: Fly.io deployment token for automated deployments
+# TAILSCALE_AUTHKEY: Ephemeral Tailscale auth key for mesh network access
 ```
 
-**Note**: The GitHub Actions workflow will automatically set these as Fly.io secrets during deployment.
+**Note**: The GitHub Actions workflow automatically uses these secrets and sets them as Fly.io application secrets during deployment.
 
 ## How GitHub-Based Access Works
 
