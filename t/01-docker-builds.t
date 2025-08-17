@@ -204,31 +204,7 @@ subtest 'docker build process validation' => sub {
     }
 };
 
-# Test 11: Build script exists and is executable
-subtest 'build automation script' => sub {
-    my $build_script = 'scripts/build-images.sh';
-    ok(-f $build_script, 'build-images.sh exists');
-    skip_all "build-images.sh not found" unless -f $build_script;
-    ok(-x $build_script, 'build-images.sh is executable');
-};
-
-# Test 12: Build script configuration
-subtest 'build script configuration' => sub {
-    my $build_script = 'scripts/build-images.sh';
-    skip_all "build-images.sh not found" unless -f $build_script;
-    
-    open my $fh, '<', $build_script or die "Can't open $build_script: $!";
-    my $content = do { local $/; <$fh> };
-    close $fh;
-    
-    # Build script should handle both images
-    like($content, qr/solanum/i, 'Build script includes Solanum image');
-    like($content, qr/atheme/i, 'Build script includes Atheme image');
-    like($content, qr/docker.*build/i, 'Build script uses docker build');
-    like($content, qr/--platform.*amd64/i, 'Build script targets AMD64 platform');
-};
-
-# Test 13: Configuration template syntax validation
+# Test 11: Configuration template syntax validation
 subtest 'configuration template syntax' => sub {
     foreach my $component (keys %DOCKER_CONFIGS) {
         my $template = $DOCKER_CONFIGS{$component}->{config_template};
@@ -252,7 +228,7 @@ subtest 'configuration template syntax' => sub {
     }
 };
 
-# Test 14: Health endpoint validation in startup scripts
+# Test 12: Health endpoint validation in startup scripts
 subtest 'health endpoint configuration' => sub {
     foreach my $component (keys %DOCKER_CONFIGS) {
         my $script = $DOCKER_CONFIGS{$component}->{startup_script};
@@ -268,7 +244,7 @@ subtest 'health endpoint configuration' => sub {
     }
 };
 
-# Test 15: AMD EPYC specific optimizations
+# Test 13: AMD EPYC specific optimizations
 subtest 'amd epyc specific optimizations' => sub {
     foreach my $component (keys %DOCKER_CONFIGS) {
         next unless $DOCKER_CONFIGS{$component}->{openssl_optimization};

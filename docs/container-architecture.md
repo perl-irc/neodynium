@@ -265,18 +265,18 @@ echo "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nService Health OK"
 
 ## Build Process Architecture
 
-### Automated Build Pipeline
-The `scripts/build-images.sh` provides:
-- **Multi-platform Support**: `linux/amd64` targeting
-- **Caching Strategy**: Configurable build cache management
-- **Validation Pipeline**: Pre-build file and permission verification
-- **Image Tagging**: Flexible registry and tag management
+### Fly.io Automated Build Pipeline
+Fly.io handles Docker image building automatically during deployment:
+- **Remote Builders**: Fly.io's AMD EPYC builders compile images optimally
+- **Multi-stage Builds**: Efficient layer caching and minimal production images
+- **Platform Targeting**: Automatic `linux/amd64` builds for Fly.io infrastructure
+- **GitHub Integration**: Builds triggered via GitHub Actions on push to main
 
 ### Build Optimization Strategy
-- **Layer Caching**: Optimized Dockerfile layer ordering
-- **Multi-stage Efficiency**: Minimal production image size
-- **Parallel Processing**: `$(nproc)` compilation utilization
-- **Build Time Targets**: Sub-10-minute build completion
+- **Layer Caching**: Optimized Dockerfile layer ordering for fast rebuilds
+- **Multi-stage Efficiency**: Build stage discarded, only production artifacts retained
+- **Parallel Processing**: `$(nproc)` compilation utilization during build stage
+- **Remote Compilation**: Leverages Fly.io's high-performance build infrastructure
 
 ## Deployment Integration
 
