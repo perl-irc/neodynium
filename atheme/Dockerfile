@@ -14,6 +14,8 @@ RUN apk update && apk add --no-cache \
     openssl-dev \
     postgresql-dev \
     pcre-dev \
+    gettext-dev \
+    libintl \
     git \
     && rm -rf /var/cache/apk/*
 
@@ -22,6 +24,8 @@ WORKDIR /tmp
 RUN git clone https://github.com/atheme/atheme.git
 WORKDIR /tmp/atheme
 ENV CFLAGS="-march=znver2 -O3"
+# Generate configure script if needed
+RUN if [ ! -f configure ]; then autoreconf -fiv; fi
 RUN ./configure --prefix=/opt/atheme \
     --enable-contrib \
     --with-pcre \
