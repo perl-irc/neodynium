@@ -34,6 +34,9 @@ flyctl auth login
 ```bash
 # Optional: Customize test user (defaults to $USER)
 export USER=your-username
+
+# Optional: Skip deployment test (faster but less comprehensive)
+export MAGNET_SKIP_DEPLOYMENT=1
 ```
 
 ## Running Integration Tests
