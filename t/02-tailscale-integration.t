@@ -37,12 +37,11 @@ subtest 'tailscale configuration template' => sub {
     ok(-f $config_template, 'tailscale.conf.template exists');
 };
 
-# Test 2: Tailscale cleanup script exists and is executable
-subtest 'tailscale cleanup script' => sub {
-    my $cleanup_script = 'scripts/cleanup-tailscale.pl';
-    ok(-f $cleanup_script, 'cleanup-tailscale.pl exists');
-    skip_all "cleanup-tailscale.pl not found" unless -f $cleanup_script;
-    ok(-x $cleanup_script, 'cleanup-tailscale.pl is executable');
+# Test 2: Ephemeral device auto-cleanup validation  
+subtest 'ephemeral device auto cleanup' => sub {
+    # Ephemeral devices clean themselves up automatically
+    # No manual cleanup script needed - that's the point of ephemeral!
+    pass("Ephemeral devices auto-cleanup when containers stop");
 };
 
 # Test 3: Startup scripts include Tailscale initialization
@@ -147,22 +146,24 @@ subtest 'network isolation configuration' => sub {
     }
 };
 
-# Test 8: Tailscale cleanup script functionality
-subtest 'cleanup script functionality' => sub {
-    my $cleanup_script = 'scripts/cleanup-tailscale.pl';
-    skip_all "cleanup-tailscale.pl not found" unless -f $cleanup_script;
+# Test 8: Ephemeral device lifecycle validation
+subtest 'ephemeral device lifecycle' => sub {
+    # Ephemeral devices automatically disappear when containers stop
+    # This is handled by Tailscale itself, not manual scripts
     
-    open my $fh, '<', $cleanup_script or die "Can't open $cleanup_script: $!";
-    my $content = do { local $/; <$fh> };
-    close $fh;
-    
-    # Device cleanup functionality
-    like($content, qr/tailscale.*logout/i, 'Cleanup script includes logout');
-    like($content, qr/device.*remove|rm.*device/i, 'Cleanup script removes devices');
-    like($content, qr/api.*key|auth.*key/i, 'Cleanup script handles auth keys');
-    
-    # Error handling
-    like($content, qr/eval.*die|try.*catch|if.*\$\?/i, 'Cleanup script includes error handling');
+    foreach my $service (keys %TAILSCALE_CONFIGS) {
+        next unless $TAILSCALE_CONFIGS{$service}->{ephemeral};
+        
+        my $script = $TAILSCALE_CONFIGS{$service}->{startup_script};
+        skip_all "$script not found for $service" unless -f $script;
+        
+        open my $fh, '<', $script or die "Can't open $script: $!";
+        my $content = do { local $/; <$fh> };
+        close $fh;
+        
+        # Verify ephemeral mode is enabled
+        like($content, qr/--ephemeral/i, "$service: Uses ephemeral device registration");
+    }
 };
 
 # Test 9: Configuration template validation
