@@ -15,14 +15,11 @@ jobs:
   setup-infrastructure:
     name: Setup Infrastructure
     runs-on: ubuntu-latest
+    container: perl:stable-slim
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      
-      - name: Setup Perl
-        run: |
-          apt-get update && apt-get install -y perl cpanminus
           
       - name: Create PostgreSQL Database
         run: |
