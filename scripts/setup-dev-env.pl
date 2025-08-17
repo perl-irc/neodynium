@@ -222,7 +222,7 @@ sub cleanup_dev_environment {
     my ($username, $confirm) = @_;
     
     unless ($confirm) {
-        print "⚠️  This will DELETE all development apps and volumes for $username!\n";
+        print "⚠️  This will DELETE all development apps, volumes, and database for $username!\n";
         print "Use --confirm to proceed with cleanup.\n";
         return 0;
     }
@@ -248,8 +248,71 @@ sub cleanup_dev_environment {
         }
     }
     
-    print "\n✅ Cleanup complete: $cleanup_count apps destroyed\n";
+    # Clean up Managed Postgres
+    my $postgres_name = "magnet-postgres-$username";
+    my $list_output = `flyctl mpg list --org personal 2>&1`;
+    if ($list_output =~ /$postgres_name/) {
+        print "Destroying Managed Postgres $postgres_name...\n";
+        my $cmd = "flyctl mpg destroy $postgres_name --force";
+        my $output = `$cmd 2>&1`;
+        if ($? == 0) {
+            print "✅ Destroyed Managed Postgres $postgres_name\n";
+            $cleanup_count++;
+        } else {
+            print "❌ Failed to destroy Postgres:\n$output\n";
+        }
+    }
+    
+    print "\n✅ Cleanup complete: $cleanup_count resources destroyed\n";
     return 1;
+}
+
+sub create_dev_postgres {
+    my ($username) = @_;
+    
+    my $postgres_name = "magnet-postgres-$username";
+    
+    print "🐘 Setting up Managed Postgres for development...\n";
+    
+    # Check if managed postgres already exists
+    my $list_output = `flyctl mpg list --org personal 2>&1`;
+    if ($list_output =~ /$postgres_name/) {
+        print "✅ Managed Postgres $postgres_name already exists\n";
+        return 1;
+    }
+    
+    print "📦 Creating Managed Postgres cluster $postgres_name...\n";
+    
+    my $cmd = "flyctl mpg create --name $postgres_name --region ord --org personal";
+    my $output = `$cmd 2>&1`;
+    
+    if ($? == 0) {
+        print "✅ Created Managed Postgres cluster $postgres_name\n";
+        return 1;
+    } else {
+        print "❌ Failed to create Managed Postgres cluster:\n$output\n";
+        return 0;
+    }
+}
+
+sub attach_dev_postgres {
+    my ($username) = @_;
+    
+    my $postgres_name = "magnet-postgres-$username";
+    my $atheme_app = get_dev_app_name('magnet-services', $username);
+    
+    print "🔗 Attaching Postgres to $atheme_app...\n";
+    
+    my $cmd = "flyctl mpg attach $postgres_name --app $atheme_app 2>&1";
+    my $output = `$cmd`;
+    
+    if ($? == 0 || $output =~ /already attached/i) {
+        print "✅ Postgres attached to $atheme_app\n";
+        return 1;
+    } else {
+        print "⚠️  Failed to attach Postgres (may already be attached):\n$output\n";
+        return 1; # Not fatal
+    }
 }
 
 sub main {
@@ -324,6 +387,11 @@ EOF
     
     my $total_success = 1;
     
+    # Create Managed Postgres first
+    unless (create_dev_postgres($username)) {
+        print "⚠️  Warning: Postgres setup failed, continuing...\n";
+    }
+    
     foreach my $base_name (@DEV_APPS) {
         print "Setting up $base_name environment...\n";
         
@@ -341,6 +409,13 @@ EOF
         # Setup secrets
         unless (setup_dev_secrets($base_name, $username)) {
             $total_success = 0;
+        }
+        
+        # Attach Postgres to atheme
+        if ($base_name eq 'magnet-services') {
+            unless (attach_dev_postgres($username)) {
+                print "⚠️  Warning: Postgres attachment failed\n";
+            }
         }
         
         print "\n";
