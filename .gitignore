@@ -1,0 +1,22 @@
+# PVX local modules
+local/
+
+# Claude Code private files
+.claude/
+CLAUDE.md
+
+# Temporary files
+*.tmp
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*~
+.*.swp
+.*.swo
+
+# Log files
+*.log
