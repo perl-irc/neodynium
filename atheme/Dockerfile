@@ -71,8 +71,8 @@ RUN chown -R atheme /atheme
 
 # Copy configuration templates and startup script
 COPY atheme/atheme.conf.template /atheme/etc/atheme.conf.template
-COPY atheme/entrypoint.sh /app/start.sh
-RUN chmod +x /app/start.sh
+COPY atheme/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -86,4 +86,4 @@ VOLUME /atheme/etc
 
 # Container starts as root for Tailscale, drops to atheme user for services
 WORKDIR /atheme
-CMD ["/app/start.sh"]
+CMD ["/app/entrypoint.sh"]
