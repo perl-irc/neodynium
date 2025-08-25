@@ -9,10 +9,10 @@ primary_region = "ord"
   cpus = 1
 
 [build]
-  dockerfile = "../../solanum/Dockerfile"
+  dockerfile = "solanum/Dockerfile"
 
 [mounts]
-  source = "magnet_9rl_data"
+  source = "magnet_9rl_data_1gb"
   destination = "/opt/solanum/var"
 
 [env]

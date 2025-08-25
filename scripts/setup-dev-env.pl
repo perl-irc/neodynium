@@ -250,74 +250,15 @@ sub cleanup_dev_environment {
         }
     }
     
-    # Note: We use production Postgres cluster, don't destroy it during cleanup
-    # The per-user database within the cluster provides isolation
-    print "ℹ️  Skipping Postgres cleanup (using production cluster)\n";
+    # PostgreSQL cleanup removed - atheme uses opensex flat file backend
     
     print "\n✅ Cleanup complete: $cleanup_count resources destroyed\n";
     return 1;
 }
 
-sub create_dev_postgres {
-    my ($username) = @_;
-    
-    # Use production postgres cluster with test users
-    my $postgres_name = "magnet-postgres";
-    
-    print "🐘 Checking for Postgres cluster...\n";
-    
-    # Check if production postgres exists (try both MPG and unmanaged)
-    my $mpg_output = `flyctl mpg list --org magnet-irc 2>&1`;
-    my $pg_output = `flyctl postgres list 2>&1`;
-    
-    if ($mpg_output =~ /$postgres_name/ || $pg_output =~ /$postgres_name/) {
-        print "✅ Postgres cluster $postgres_name is available\n";
-        return 1;
-    }
-    
-    # Check if it exists as a regular app
-    my $app_check = `flyctl status --app $postgres_name 2>&1`;
-    if ($? == 0) {
-        print "✅ Postgres app $postgres_name exists\n";
-        return 1;
-    }
-    
-    print "⚠️  Postgres cluster $postgres_name not found in accessible context\n";
-    print "ℹ️  If the cluster exists but isn't accessible, check organization permissions\n";
-    print "ℹ️  Continuing without Postgres (apps will still be created)\n";
-    return 0;
-}
+# PostgreSQL removed - atheme uses opensex flat file backend
 
-sub attach_dev_postgres {
-    my ($username) = @_;
-    
-    my $postgres_name = "magnet-postgres";
-    my $atheme_app = get_dev_app_name('magnet-services', $username);
-    
-    print "🔗 Attaching production Postgres cluster to $atheme_app...\n";
-    print "ℹ️  Note: Per-user database isolation will be handled at the application level\n";
-    
-    # Try to attach the shared cluster (creates DATABASE_URL environment variable)
-    my $cmd = "flyctl mpg attach $postgres_name --app $atheme_app 2>&1";
-    my $output = `$cmd`;
-    
-    if ($? == 0 || $output =~ /already attached/i) {
-        print "✅ Postgres cluster attached to $atheme_app\n";
-        
-        # Note: Fly MPG attach creates an auto-named database based on app name
-        # For dev environments, atheme will use this auto-created database
-        print "ℹ️  Atheme will use auto-created database from MPG attachment\n";
-        
-        return 1;
-    } elsif ($output =~ /not found/i) {
-        print "⚠️  Postgres cluster not accessible - may need manual attachment\n";
-        print "ℹ️  If cluster exists, try: flyctl mpg attach <cluster-id> --app $atheme_app\n";
-        return 1; # Not fatal - continue without Postgres
-    } else {
-        print "⚠️  Failed to attach Postgres:\n$output\n";
-        return 1; # Not fatal - continue without Postgres
-    }
-}
+# PostgreSQL attachment removed - atheme uses opensex flat file backend
 
 sub main {
     my $username = get_username();
@@ -392,10 +333,7 @@ EOF
     
     my $total_success = 1;
     
-    # Create Managed Postgres first
-    unless (create_dev_postgres($username)) {
-        print "⚠️  Warning: Postgres setup failed, continuing...\n";
-    }
+    # PostgreSQL setup removed - atheme uses opensex flat file backend
     
     foreach my $base_name (@DEV_APPS) {
         print "Setting up $base_name environment...\n";
@@ -416,12 +354,7 @@ EOF
             $total_success = 0;
         }
         
-        # Attach Postgres to atheme
-        if ($base_name eq 'magnet-services') {
-            unless (attach_dev_postgres($username)) {
-                print "⚠️  Warning: Postgres attachment failed\n";
-            }
-        }
+        # PostgreSQL attachment removed - atheme uses opensex flat file backend
         
         print "\n";
     }

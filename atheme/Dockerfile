@@ -31,6 +31,7 @@ RUN git clone https://github.com/atheme/atheme -b v${ATHEME_VERSION} --depth=1 /
 RUN cd /atheme-src/libmowgli-2 && git pull origin master
 
 # Generate autotools files if needed and configure with PostgreSQL support
+# Force rebuild 2025-08-25 for PostgreSQL backend module
 RUN cd /atheme-src && \
     autoreconf -fiv && \
     ./configure \
@@ -53,6 +54,9 @@ RUN apk add --no-cache \
     ca-certificates \
     curl \
     gettext \
+    pwgen \
+    su-exec \
+    pcre \
     && rm -rf /var/cache/apk/*
 
 # Copy Atheme from builder
@@ -69,10 +73,19 @@ RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale /app
 RUN adduser -D -h /atheme -u $ATHEME_UID atheme
 RUN chown -R atheme /atheme
 
-# Copy configuration templates and startup script
+# Force cache invalidation with build timestamp
+ARG BUILD_TIMESTAMP
+RUN echo "Build timestamp: $BUILD_TIMESTAMP" > /tmp/build_info
+
+# Test build context - copy test file first  
+COPY test-build-context.txt /tmp/test.txt
+
+# Copy configuration templates and startup script  
 COPY atheme/atheme.conf.template /atheme/etc/atheme.conf.template
 COPY atheme/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
+
+
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

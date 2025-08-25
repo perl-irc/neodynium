@@ -23,7 +23,7 @@ WORKDIR /tmp
 RUN git clone https://github.com/solanum-ircd/solanum.git
 WORKDIR /tmp/solanum
 RUN ./autogen.sh
-ENV CFLAGS="-march=znver2 -O3"
+ENV CFLAGS="-O2"
 RUN ./configure --prefix=/opt/solanum \
     --enable-epoll \
     --enable-openssl \
@@ -51,9 +51,6 @@ RUN apk update && apk add --no-cache \
     netcat-openbsd \
     && rm -rf /var/cache/apk/*
 
-# Fix SQLite library linking issue for bandb
-RUN find /usr -name "libsqlite3.so*" -type f | head -1 | xargs -I {} ln -sf {} /usr/lib/libsqlite3.so.0 || true
-
 # Copy Solanum from builder
 COPY --from=builder /opt/solanum /opt/solanum
 
@@ -63,15 +60,16 @@ COPY --from=tailscale/tailscale:latest /usr/local/bin/tailscale /usr/local/bin/t
 
 # Create directories
 RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
-RUN mkdir -p /opt/solanum/var/log /opt/solanum/var/run /opt/solanum/etc
+RUN mkdir -p /opt/solanum/var/log /opt/solanum/var/run /opt/solanum/etc /opt/solanum/logs
 
 # Create ircd user and set permissions
 RUN adduser -D -s /bin/false ircd
-RUN chown -R ircd:ircd /opt/solanum/var
+RUN chown -R ircd:ircd /opt/solanum/var /opt/solanum/logs
 
 # Copy configuration templates and startup script
-COPY solanum/ircd.conf.template /opt/solanum/etc/ircd.conf.template
-COPY solanum/entrypoint.sh /app/start.sh
+COPY test.txt /tmp/test.txt
+COPY ircd.conf.template /opt/solanum/etc/ircd.conf.template
+COPY entrypoint.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
 # Container starts as root for Tailscale, drops to ircd user for Solanum

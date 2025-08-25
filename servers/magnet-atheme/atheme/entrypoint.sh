@@ -39,9 +39,16 @@ source /atheme/etc/passwords.conf
 # Process atheme.conf template with generated passwords
 echo "Instantiating atheme.conf from template..."
 
-# Atheme uses opensex flat file backend - no database configuration needed
+# Extract database details from DATABASE_URL if available
+if [ -n "$DATABASE_URL" ]; then
+    echo "Using DATABASE_URL for PostgreSQL connection"
+    # Parse DATABASE_URL: postgres://user:pass@host:port/dbname
+    export ATHEME_POSTGRES_HOST=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):.*/\1/p')
+    export ATHEME_POSTGRES_DB=$(echo "$DATABASE_URL" | sed -n 's/.*\/\([^?]*\).*/\1/p')
+    echo "Extracted from DATABASE_URL: host=$ATHEME_POSTGRES_HOST, db=$ATHEME_POSTGRES_DB"
+fi
 
-envsubst '${ATHEME_NETWORK} ${ATHEME_NETWORK_DOMAIN} ${SERVICES_PASSWORD} ${OPERATOR_PASSWORD} ${ATHEME_HUB_SERVER} ${HUB_NAME}' \
+envsubst '${ATHEME_NETWORK} ${ATHEME_NETWORK_DOMAIN} ${SERVICES_PASSWORD} ${OPERATOR_PASSWORD} ${ATHEME_HUB_SERVER} ${ATHEME_HUB_HOSTNAME} ${DATABASE_URL}' \
     < /atheme/etc/atheme.conf.template \
     > /atheme/etc/atheme.conf
 
@@ -52,7 +59,27 @@ echo "Atheme configuration instantiated successfully"
 echo "Tailscale hostname: ${HOSTNAME}"
 echo "Services password: ${SERVICES_PASSWORD}"
 
-# Atheme uses opensex flat file backend - no database connection needed
+# Wait for PostgreSQL to be available (if DATABASE_URL is set)
+if [ -n "$DATABASE_URL" ]; then
+    echo "Waiting for PostgreSQL to be available..."
+    max_attempts=30
+    attempt=1
+    
+    while [ $attempt -le $max_attempts ]; do
+        if pg_isready -d "$DATABASE_URL" >/dev/null 2>&1; then
+            echo "PostgreSQL is ready!"
+            break
+        fi
+        
+        echo "PostgreSQL not ready, attempt $attempt/$max_attempts..."
+        sleep 2
+        attempt=$((attempt + 1))
+    done
+    
+    if [ $attempt -gt $max_attempts ]; then
+        echo "WARNING: PostgreSQL not available after $max_attempts attempts, proceeding anyway"
+    fi
+fi
 
 # Simple HTTP health endpoint
 (while true; do

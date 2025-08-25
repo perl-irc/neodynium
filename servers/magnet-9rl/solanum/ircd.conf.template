@@ -9,6 +9,7 @@ serverinfo {
     sid = "${SERVER_SID}";
     description = "${SERVER_DESCRIPTION}";
     network_name = "Magnet";
+    network_desc = "Magnet IRC Network";
     vhost = "0.0.0.0";
     vhost6 = "::";
 };
@@ -45,18 +46,21 @@ class "server" {
 /* Listeners with OpenSSL SSL/TLS */
 listen { port = 6667; host = "0.0.0.0"; };
 listen { port = 6667; host = "fly-local-6pn"; };
-listen { port = 6697; host = "0.0.0.0"; };
-listen { port = 6697; host = "fly-local-6pn"; };
-listen { port = 7000; host = "0.0.0.0"; };
-listen { port = 7000; host = "fly-local-6pn"; };
+listen { port = 6697; host = "0.0.0.0"; ssl = yes; };
+listen { port = 6697; host = "fly-local-6pn"; ssl = yes; };
+listen { port = 7000; host = "0.0.0.0"; ssl = yes; };
+listen { port = 7000; host = "fly-local-6pn"; ssl = yes; };
 listen { port = 8080; host = "0.0.0.0"; };
 
 /* Operator block */
 operator "admin" {
     user = "*@*";
     password = "${OPER_PASSWORD}";
-    privs = oper:general;
+    flags = global_kill, remote, kline, unkline, gline, ungline,
+            die, restart, rehash, admin, operwall, wallops,
+            locops, mass_notice, remoteban;
     snomask = "+Zbfkrsuy";
+    class = "opers";
 };
 
 /* Hub-only configuration (magnet-9rl) */
@@ -91,6 +95,7 @@ channel {
     max_bans = 100;
     autochanmodes = "+nt";
     displayed_usercount = 3;
+    strip_topic = yes;
 };
 
 /* Authentication blocks - allow public connections */
@@ -99,6 +104,12 @@ auth {
     class = "users";
 };
 
+/* Auth block for operators */
+auth {
+    user = "*@*";
+    class = "opers";
+    flags = need_ident;
+};
 
 /* Essential extensions */
 loadmodule "extensions/chm_sslonly";

@@ -10,18 +10,17 @@ primary_region = "ord"
 
 [build]
   dockerfile = "../../atheme/Dockerfile"
+  context = "."
 
 [mounts]
-  source = "magnet_atheme_data"
+  source = "magnet_atheme_data_1gb"
   destination = "/var/lib/atheme"
 
 [env]
   SERVER_NAME = "magnet-atheme"
   ATHEME_NETWORK = "Magnet"
-  ATHEME_POSTGRES_HOST = "magnet-postgres.internal"
-  ATHEME_POSTGRES_DB = "atheme"
   ATHEME_HUB_SERVER = "magnet-9RL"
-  ATHEME_HUB_HOSTNAME = "magnet-9rl"
+  ATHEME_HUB_HOSTNAME = "magnet-9rl.internal"
 
 [http_service]
   internal_port = 8080
