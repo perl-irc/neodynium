@@ -4,6 +4,8 @@
 
 use strict;
 use warnings;
+use utf8;
+use open ':std', ':encoding(UTF-8)';
 use Getopt::Long;
 use JSON::PP;
 
@@ -72,7 +74,7 @@ sub create_dev_app {
     
     print "🏗️  Creating dev app $app_name...\n";
     
-    my $create_cmd = "flyctl apps create $app_name --org personal";
+    my $create_cmd = "flyctl apps create $app_name --org magnet-irc";
     my $output = `$create_cmd 2>&1`;
     
     if ($? == 0) {
@@ -222,7 +224,7 @@ sub cleanup_dev_environment {
     my ($username, $confirm) = @_;
     
     unless ($confirm) {
-        print "⚠️  This will DELETE all development apps and volumes for $username!\n";
+        print "⚠️  This will DELETE all development apps, volumes, and database for $username!\n";
         print "Use --confirm to proceed with cleanup.\n";
         return 0;
     }
@@ -248,9 +250,15 @@ sub cleanup_dev_environment {
         }
     }
     
-    print "\n✅ Cleanup complete: $cleanup_count apps destroyed\n";
+    # PostgreSQL cleanup removed - atheme uses opensex flat file backend
+    
+    print "\n✅ Cleanup complete: $cleanup_count resources destroyed\n";
     return 1;
 }
+
+# PostgreSQL removed - atheme uses opensex flat file backend
+
+# PostgreSQL attachment removed - atheme uses opensex flat file backend
 
 sub main {
     my $username = get_username();
@@ -314,7 +322,8 @@ EOF
     }
     
     if ($cleanup) {
-        exit cleanup_dev_environment($username, $confirm) ? 0 : 1;
+        my $result = cleanup_dev_environment($username, $confirm);
+        exit($result ? 0 : 1);
     }
     
     # Default: Set up dev environment
@@ -323,6 +332,8 @@ EOF
     print "🚀 Setting up development environment...\n\n";
     
     my $total_success = 1;
+    
+    # PostgreSQL setup removed - atheme uses opensex flat file backend
     
     foreach my $base_name (@DEV_APPS) {
         print "Setting up $base_name environment...\n";
@@ -342,6 +353,8 @@ EOF
         unless (setup_dev_secrets($base_name, $username)) {
             $total_success = 0;
         }
+        
+        # PostgreSQL attachment removed - atheme uses opensex flat file backend
         
         print "\n";
     }

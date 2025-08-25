@@ -33,9 +33,9 @@ serverinfo {
     emailtime = 300;
 };
 
-/* Uplink configuration */
-uplink "${ATHEME_HUB_SERVER}.${HUB_NAME}" {
-    host = "${ATHEME_HUB_SERVER}.${HUB_NAME}";
+/* Uplink configuration via Tailscale */
+uplink "${ATHEME_HUB_SERVER}.raptor-betelgeuse.ts.net" {
+    host = "${ATHEME_HUB_HOSTNAME}";  /* Tailscale hostname */
     send_password = "${SERVICES_PASSWORD}";
     receive_password = "${SERVICES_PASSWORD}";
     port = 6667;

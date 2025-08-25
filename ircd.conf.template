@@ -1,14 +1,15 @@
 /* ABOUTME: Solanum IRCd configuration template with environment variable substitution
-/* ABOUTME: Optimized for AMD EPYC with OpenSSL acceleration and Fly.io .internal networking
+/* ABOUTME: Optimized for AMD EPYC with OpenSSL acceleration and Tailscale mesh networking
 
 /* Solanum IRCd Configuration Template for ${SERVER_NAME} */
 /* Optimized for AMD EPYC with OpenSSL acceleration */
 
 serverinfo {
-    name = "${SERVER_NAME}.internal";
+    name = "${SERVER_NAME}.raptor-betelgeuse.ts.net";
     sid = "${SERVER_SID}";
     description = "${SERVER_DESCRIPTION}";
     network_name = "Magnet";
+    network_desc = "Magnet IRC Network";
     vhost = "0.0.0.0";
     vhost6 = "::";
 };
@@ -16,7 +17,7 @@ serverinfo {
 admin {
     name = "Network Administrator";
     description = "Magnet IRC Network";
-    email = "admin@magnet.internal";
+    email = "admin@raptor-betelgeuse.ts.net";
 };
 
 /* Connection classes optimized for AMD EPYC performance */
@@ -42,25 +43,78 @@ class "server" {
     sendq = 4 megabytes;
 };
 
+class "services" {
+    ping_time = 5 minutes;
+    max_number = 1;
+    sendq = 4 megabytes;
+};
+
+/* Auth blocks for connections */
+/* Services connection from Tailscale hostname */
+auth {
+    user = "*@magnet-atheme*";
+    class = "services";
+    flags = no_ident, exemptdline, exceed_limit;
+};
+
+/* Services from Fly.io private network */
+auth {
+    user = "*@172.19.*";
+    class = "services";
+    flags = no_ident, exemptdline, exceed_limit;
+};
+
+/* Internal Fly.io network connections */  
+auth {
+    user = "*@*.internal";
+    class = "users";
+    flags = no_ident;
+};
+
+/* General user connections */
+auth {
+    user = "*@*";
+    class = "users";
+};
+
 /* Listeners with OpenSSL SSL/TLS */
 listen { port = 6667; host = "0.0.0.0"; };
-listen { port = 6667; host = "fly-local-6pn"; };
-listen { port = 6697; host = "0.0.0.0"; };
-listen { port = 6697; host = "fly-local-6pn"; };
-listen { port = 7000; host = "0.0.0.0"; };
-listen { port = 7000; host = "fly-local-6pn"; };
+listen { port = 6697; host = "0.0.0.0"; ssl = yes; };
+listen { port = 7000; host = "0.0.0.0"; ssl = yes; };
 listen { port = 8080; host = "0.0.0.0"; };
 
 /* Operator block */
 operator "admin" {
     user = "*@*";
     password = "${OPER_PASSWORD}";
-    privs = oper:general;
+    flags = global_kill, remote, kline, unkline, gline, ungline,
+            die, restart, rehash, admin, operwall, wallops,
+            locops, mass_notice, remoteban;
     snomask = "+Zbfkrsuy";
+    class = "opers";
 };
 
-/* Hub-only configuration (magnet-9rl) */
-${HUB_CONFIG}
+/* Server linking via Tailscale (only for hub - 9RL) */
+connect "magnet-1EU.raptor-betelgeuse.ts.net" {
+    host = "magnet-1eu";  /* Tailscale hostname */
+    send_password = "${LINK_PASSWORD_9RL_1EU}";
+    accept_password = "${LINK_PASSWORD_9RL_1EU}";
+    port = 7000;
+    hub_mask = "*";
+    class = "server";
+    flags = ssl;
+};
+
+/* Services linking via Tailscale (only for hub - 9RL) */
+service { name = "services.raptor-betelgeuse.ts.net"; };
+connect "services.raptor-betelgeuse.ts.net" {
+    host = "magnet-atheme";  /* Tailscale hostname */
+    send_password = "${SERVICES_PASSWORD}";
+    accept_password = "${SERVICES_PASSWORD}";
+    port = 6667;
+    class = "server";
+    flags = ssl;
+};
 
 /* General settings */
 general {
@@ -77,8 +131,8 @@ general {
     ts_max_delta = 5 minutes;
     collision_fnc = yes;
     no_oper_flood = yes;
-    throttle_duration = 60 seconds;
-    throttle_count = 4;
+    throttle_duration = 30 seconds;
+    throttle_count = 10;
 };
 
 /* Channel settings */
@@ -91,14 +145,8 @@ channel {
     max_bans = 100;
     autochanmodes = "+nt";
     displayed_usercount = 3;
+    strip_topic = yes;
 };
-
-/* Authentication blocks - allow public connections */
-auth {
-    user = "*@*";
-    class = "users";
-};
-
 
 /* Essential extensions */
 loadmodule "extensions/chm_sslonly";

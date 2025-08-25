@@ -4,10 +4,12 @@
 
 use strict;
 use warnings;
+use utf8;
+use open ':std', ':encoding(UTF-8)';
 use Getopt::Long;
 
-# Production applications
-my @PRODUCTION_APPS = qw(magnet-9rl magnet-1eu magnet-atheme magnet-postgres);
+# Production applications (magnet-postgres removed - atheme uses opensex backend)
+my @PRODUCTION_APPS = qw(magnet-9rl magnet-1eu magnet-atheme);
 
 sub check_prerequisites {
     print "🔍 Checking prerequisites...\n";
@@ -252,8 +254,7 @@ Options:
 Production Apps:
     magnet-9rl       US Hub IRC server
     magnet-1eu       EU IRC server
-    magnet-atheme    IRC services
-    magnet-postgres  PostgreSQL database
+    magnet-atheme    IRC services (uses opensex flat file backend)
 
 Examples:
     $0 --action status                    # Show status of all apps
