@@ -4,8 +4,8 @@
 
 set -e
 
-# Start Tailscale daemon in background
-/usr/local/bin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock &
+# Start Tailscale daemon in background with userspace networking for containers
+/usr/local/bin/tailscaled --tun=userspace-networking --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock &
 
 # Wait for daemon to start
 sleep 5
