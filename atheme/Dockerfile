@@ -50,8 +50,8 @@ RUN mkdir -p /var/lib/atheme
 RUN chown atheme:atheme /var/lib/atheme
 
 # Copy configuration templates and startup script
-COPY atheme/atheme.conf.template /opt/atheme/atheme.conf.template
-COPY atheme/entrypoint.sh /app/entrypoint.sh
+COPY atheme.conf.template /opt/atheme/atheme.conf.template
+COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Container starts as root for Tailscale, drops to atheme user for services

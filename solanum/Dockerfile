@@ -60,16 +60,16 @@ RUN adduser -D -h /opt/solanum -u 1000 ircd
 RUN chown -R ircd:ircd /opt/solanum/
 
 # Copy configuration templates and startup scripts
-COPY solanum/common.conf.template /opt/solanum/conf/common.conf.template
-COPY solanum/opers.conf.template /opt/solanum/conf/opers.conf.template
-COPY solanum/start.sh /app/start.sh
-COPY solanum/start-dynamic.sh /app/start-dynamic.sh
-COPY solanum/renew-cert.sh /opt/solanum/bin/renew-cert.sh
-COPY solanum/renew-hook.sh /opt/solanum/bin/renew-hook.sh
+COPY common.conf.template /opt/solanum/conf/common.conf.template
+COPY opers.conf.template /opt/solanum/conf/opers.conf.template
+COPY start.sh /app/start.sh
+COPY start-dynamic.sh /app/start-dynamic.sh
+COPY renew-cert.sh /opt/solanum/bin/renew-cert.sh
+COPY renew-hook.sh /opt/solanum/bin/renew-hook.sh
 RUN chmod +x /app/start.sh /app/start-dynamic.sh /opt/solanum/bin/renew-cert.sh /opt/solanum/bin/renew-hook.sh
 
 # Copy server-specific config
-COPY server.conf /opt/solanum/conf/server.conf.template
+COPY ../server.conf /opt/solanum/conf/server.conf.template
 
 # Container starts as root for Tailscale, drops to ircd user for Solanum
 WORKDIR /opt/solanum
