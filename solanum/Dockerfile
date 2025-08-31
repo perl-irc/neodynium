@@ -69,7 +69,7 @@ COPY renew-hook.sh /opt/solanum/bin/renew-hook.sh
 RUN chmod +x /app/start.sh /app/start-dynamic.sh /opt/solanum/bin/renew-cert.sh /opt/solanum/bin/renew-hook.sh
 
 # Copy server-specific config
-COPY ../server.conf /opt/solanum/conf/server.conf.template
+COPY server.conf /opt/solanum/conf/server.conf.template
 
 # Container starts as root for Tailscale, drops to ircd user for Solanum
 WORKDIR /opt/solanum
