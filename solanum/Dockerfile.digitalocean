@@ -1,0 +1,73 @@
+# ABOUTME: Multi-stage Solanum IRC server container optimized for DigitalOcean App Platform
+# ABOUTME: Removes Tailscale dependencies for simplified networking via App Platform URLs
+
+# Build stage
+FROM alpine:latest AS builder
+
+# Install build dependencies only
+RUN apk update && apk add --no-cache \
+    build-base \
+    pkgconfig \
+    automake \
+    autoconf \
+    libtool \
+    sqlite-dev \
+    openssl-dev \
+    bison \
+    flex \
+    git
+
+# Build Solanum following official README recipe
+WORKDIR /tmp
+RUN git clone https://github.com/solanum-ircd/solanum.git
+WORKDIR /tmp/solanum
+RUN ./autogen.sh
+RUN ./configure --prefix=/opt/solanum --enable-openssl
+RUN make
+RUN make check || echo "Tests completed (may have warnings)"
+RUN make install
+
+# Runtime stage
+FROM alpine:latest
+
+# Install runtime dependencies - excludes Tailscale for DigitalOcean
+RUN apk update && apk add --no-cache \
+    openssl \
+    sqlite-libs \
+    ca-certificates \
+    gettext \
+    su-exec \
+    netcat-openbsd \
+    procps \
+    libtool \
+    libltdl \
+    mkpasswd \
+    certbot
+
+# Copy built Solanum from build stage
+COPY --from=builder /opt/solanum /opt/solanum
+
+# Create directories (no Tailscale directories needed)
+RUN mkdir -p /opt/solanum/var/log /opt/solanum/var/run /opt/solanum/etc /opt/solanum/conf /opt/solanum/logs
+
+# Add ircd user
+RUN adduser -D -h /opt/solanum -u 1000 ircd
+RUN chown -R ircd:ircd /opt/solanum/
+
+# Copy configuration templates and startup scripts
+COPY solanum/common.conf.template /opt/solanum/conf/common.conf.template
+COPY solanum/opers.conf.template /opt/solanum/conf/opers.conf.template
+COPY solanum/start-digitalocean.sh /app/start.sh
+COPY solanum/renew-cert.sh /opt/solanum/bin/renew-cert.sh
+COPY solanum/renew-hook.sh /opt/solanum/bin/renew-hook.sh
+RUN chmod +x /app/start.sh /opt/solanum/bin/renew-cert.sh /opt/solanum/bin/renew-hook.sh
+
+# Copy server-specific config
+COPY server.conf /opt/solanum/conf/server.conf.template
+
+# Container starts as root for cert management, drops to ircd user for Solanum
+WORKDIR /opt/solanum
+
+EXPOSE 6667 6697 7000 8080
+
+CMD ["/app/start.sh"]

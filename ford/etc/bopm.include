@@ -1,0 +1,27 @@
+# PROXY SCANNER
+auth {
+  user         = "*fordbop@ford.tamarou.com";
+  spoof_notice = no;
+  exceed_limit = yes;
+  kline_exempt = yes;
+  gline_exempt = yes;
+  no_tilde     = yes;
+  spoof        = "irc.perl.org";
+  class        = "opers";
+};
+
+operator {
+  name         = "fordbop";
+  user         = "fordbop@irc.perl.org";
+  password     = ".Y60sBLb94mOo";
+  class        = "opers";
+  global_kill  = no;
+  remote       = no;
+  kline        = yes;
+  unkline      = yes;
+  gline        = no;
+  die          = no;
+  rehash       = no;
+  nick_changes = yes;
+  admin        = no;
+};

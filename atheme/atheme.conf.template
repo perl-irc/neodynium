@@ -35,7 +35,7 @@ serverinfo {
 /* Uplink configuration - primary IRC server */
 uplink "${ATHEME_HUB_HOSTNAME}" {
     host = "${ATHEME_HUB_HOSTNAME}";
-    vhost = "${ATHEME_TAILSCALE_IP}";
+    vhost = "magnet-atheme.${TAILSCALE_DOMAIN}";
     send_password = "${PASSWORD_9RL}";
     receive_password = "${SERVICES_PASSWORD}";
     port = 6667;
@@ -43,7 +43,7 @@ uplink "${ATHEME_HUB_HOSTNAME}" {
 
 uplink "${ATHEME_FALLBACK_HOSTNAME}" {
     host = "${ATHEME_FALLBACK_HOSTNAME}";
-    vhost = "${ATHEME_TAILSCALE_IP}";
+    vhost = "magnet-atheme.${TAILSCALE_DOMAIN}";
     send_password = "${PASSWORD_1EU}";
     receive_password = "${SERVICES_PASSWORD}";
     port = 6667;
