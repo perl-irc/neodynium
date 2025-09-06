@@ -1,0 +1,16 @@
+# ABOUTME: Dedicated Tailscale sidecar container for IRC server networking
+# ABOUTME: Provides secure mesh networking without coupling to IRC server container
+
+FROM tailscale/tailscale:latest
+
+# Create directories for Tailscale state
+RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
+
+# Copy startup script
+COPY start-tailscale.sh /app/start-tailscale.sh
+RUN chmod +x /app/start-tailscale.sh
+
+# Expose standard IRC ports
+EXPOSE 6667 6697 7000
+
+CMD ["/app/start-tailscale.sh"]

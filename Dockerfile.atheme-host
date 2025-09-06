@@ -1,0 +1,47 @@
+# ABOUTME: Atheme IRC services container for host Tailscale deployment
+# ABOUTME: Simplified container without embedded networking complexity
+
+# Build stage
+FROM alpine:latest AS builder
+
+# Install build dependencies
+RUN apk update && apk add --no-cache \
+    build-base \
+    pkgconfig \
+    automake \
+    autoconf \
+    libtool \
+    openssl-dev \
+    git
+
+# Build Atheme following standard recipe
+WORKDIR /tmp
+RUN git clone https://github.com/atheme/atheme.git
+WORKDIR /tmp/atheme
+RUN git submodule update --init
+RUN ./configure --prefix=/opt/atheme --enable-fhs-paths --enable-large-net --disable-nls
+RUN make
+RUN make install
+
+# Runtime stage
+FROM alpine:latest
+
+# Install runtime dependencies
+RUN apk update && apk add --no-cache \
+    openssl \
+    ca-certificates \
+    gettext \
+    su-exec
+
+# Copy built Atheme from build stage
+COPY --from=builder /opt/atheme /opt/atheme
+
+# Copy configuration template and startup script
+COPY atheme.conf.template /opt/atheme/etc/atheme.conf.template
+COPY start-atheme-host.sh /app/start-atheme-host.sh
+RUN chmod +x /app/start-atheme-host.sh
+
+# Container runs as root, drops to atheme user for services
+WORKDIR /opt/atheme
+
+CMD ["/app/start-atheme-host.sh"]

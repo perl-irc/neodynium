@@ -1,0 +1,48 @@
+# ABOUTME: Atheme IRC services container adapted for sidecar networking
+# ABOUTME: Based on working Atheme build but without embedded Tailscale
+
+FROM alpine:latest
+
+# Install build and runtime dependencies for Atheme
+RUN apk update && apk add --no-cache \
+    build-base \
+    pkgconfig \
+    automake \
+    autoconf \
+    libtool \
+    git \
+    ca-certificates \
+    gettext \
+    su-exec \
+    netcat-openbsd \
+    procps \
+    openssl-dev \
+    openssl \
+    pcre2-dev
+
+# Build Atheme from source
+WORKDIR /tmp
+RUN git clone https://github.com/atheme/atheme.git
+WORKDIR /tmp/atheme
+RUN git submodule update --init
+
+# Configure and build Atheme
+RUN ./configure --prefix=/opt/atheme --enable-contrib --enable-large-net --with-pcre
+RUN make -j$(nproc)
+RUN make install
+
+# Create directories and set up runtime environment
+RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
+RUN mkdir -p /opt/atheme/var/log /opt/atheme/var/run /opt/atheme/etc /opt/atheme/conf
+RUN adduser -D -h /opt/atheme -u 1001 atheme
+RUN chown -R atheme:atheme /opt/atheme/
+
+# Copy configuration and startup scripts
+COPY atheme.conf.template /opt/atheme/conf/atheme.conf.template
+COPY start-atheme-simple.sh /app/start-atheme-simple.sh
+RUN chmod +x /app/start-atheme-simple.sh
+
+# Container starts as root, drops to atheme user for services
+WORKDIR /opt/atheme
+
+CMD ["/app/start-atheme-simple.sh"]

@@ -1,0 +1,50 @@
+# ABOUTME: Solanum IRC container for host Tailscale deployment
+# ABOUTME: Simplified container without embedded networking complexity
+
+# Build stage
+FROM alpine:latest AS builder
+
+# Install build dependencies
+RUN apk update && apk add --no-cache \
+    build-base \
+    pkgconfig \
+    automake \
+    autoconf \
+    libtool \
+    openssl-dev \
+    git
+
+# Build Solanum following optimized recipe
+WORKDIR /tmp
+RUN git clone https://github.com/solanum-ircd/solanum.git
+WORKDIR /tmp/solanum
+RUN ./autogen.sh
+RUN ./configure --prefix=/opt/solanum --enable-openssl --enable-fhs-paths --with-program-prefix= --disable-assert
+RUN make
+RUN make install
+
+# Runtime stage
+FROM alpine:latest
+
+# Install runtime dependencies
+RUN apk update && apk add --no-cache \
+    openssl \
+    ca-certificates \
+    gettext \
+    su-exec
+
+# Copy built Solanum from build stage
+COPY --from=builder /opt/solanum /opt/solanum
+
+# Copy configuration template and startup script
+COPY common.conf.template /opt/solanum/etc/common.conf.template
+COPY opers.conf.template /opt/solanum/etc/opers.conf.template
+COPY start-solanum-host.sh /app/start-solanum-host.sh
+RUN chmod +x /app/start-solanum-host.sh
+
+# Container runs as root, drops to solanum user for ircd
+WORKDIR /opt/solanum
+
+EXPOSE 6667 6697
+
+CMD ["/app/start-solanum-host.sh"]
